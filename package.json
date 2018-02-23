@@ -1,0 +1,26 @@
+{
+  "name": "fishfry-google-square",
+  "version": "0.1.0",
+  "license": "GPL-3.0-or-later",
+  "description": "An implementation of the StMM Fish Fry processing system",
+  "main": "src/fishfry.js",
+  "contributors": [
+    "Bob Callaway (https://github.com/bobcallaway)"
+  ],
+  "readmeFilename": "README.md",
+  "scripts": {
+    "make-docs": "node_modules/.bin/jsdoc -c .jsdoc.json --verbose"
+  },
+  "devDependencies": {
+    "@freshes/jsdoc-template": "^1.0.0",
+    "@google/clasp": "^1.1.1",
+    "jsdoc": "^3.5.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/kofc7186/fishfry-google-square.git"
+  },
+  "bugs": {
+    "url": "git://github.com/kofc7186/fishfry-google-square/issues"
+  }
+}
