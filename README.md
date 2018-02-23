@@ -2,12 +2,43 @@
 
 To be added here: CI status
 
+- [Prerequisites](#prerequisites)
+- [Square Maintenance](#square-maintenance)
+- [Google Apps Maintenance](#google-apps-maintenance)
+    - [API Documentation](#api-documentation)
+
 ## Prerequisites
 * [git](https://git-scm.com/) - code repository
 * [nodejs](https://nodejs.org/en/) - used for build system
 * [clasp](https://www.npmjs.com/package/@google/clasp) - used to develop Google Apps locally 
 
-## How to edit locally
+## Square Maintenance
+### Add SQUARE_ACCESS_TOKEN
+
+In order to sync with Square, you'll need the **SQUARE_ACCESS_TOKEN** for the respective storefront.
+
+```bash
+TODO:
+```
+
+### Setup webhooks on Square
+```bash
+TODO:
+```
+
+## Google Apps Maintenance
+
+### Main Google Documents
+- [Google Drive Folder](https://drive.google.com/drive/folders/19A6FMlMWftvgrWq8Eycxfsb-8LMs2GeC)
+- [Master Fish Fry Sheet](https://docs.google.com/spreadsheets/d/1NbNqn87RH-T9CoScqKejJlSxOo_CW4VMUnDKzgcE8TU/edit)
+- [Label Template](https://docs.google.com/document/d/1rLpp1hhFASftN5VvGx2VFz_fKE2WoNqEhF2cJxW5YhI/edit) 
+
+### Setup webhooks on Google Apps
+```bash
+TODO:
+```
+
+### How to edit Google Sheet scripts locally
 
 If you want to make a copy, this should work (without being connected to square).
 1. Clone the Git repository:
@@ -30,13 +61,13 @@ If you want to make a copy, this should work (without being connected to square)
     ```bash
     clasp login
     ```
-    This launches a browser and asks you to login via oauth. 
+    This launches a browser and asks you to login via oauth.
+1. Enable **Apps Script API** by visiting [Apps Script API](https://script.google.com/home/usersettings) and toggle **Google Apps Script API** to **ON**.  
 1. Modify files locally, then push/pull the changes between your desktop and Google Apps
     - **clasp push** will push the code on your local machine to the Google App
     - **clasp pull** will pull the code from Google App to your local machine
 
-
-## API Documentation
+### API Documentation
 The hosted JSDoc files can be found [here](https://kofc7186.github.io/fishfry-google-square/fishfry-google-square/0.1.0/).
 
 To generate updated documentation:
@@ -44,12 +75,7 @@ To generate updated documentation:
 TODO:
 ```
 
-## Google Documents
-- [Google Drive Folder](https://drive.google.com/drive/folders/19A6FMlMWftvgrWq8Eycxfsb-8LMs2GeC)
-- [Master Fish Fry Sheet](https://docs.google.com/spreadsheets/d/1NbNqn87RH-T9CoScqKejJlSxOo_CW4VMUnDKzgcE8TU/edit)
-- [Label Template](https://docs.google.com/document/d/1rLpp1hhFASftN5VvGx2VFz_fKE2WoNqEhF2cJxW5YhI/edit) 
-
-### Google JavaScript Classes
+### Google Apps JavaScript Classes
 
 These are classes used to interact with the Google infrastructure.
 
@@ -72,7 +98,7 @@ These are classes used to interact with the Google infrastructure.
     - The document service creates and opens Documents that can be edited.
     - Used to retrieve the Print template, create new document based on data from Sheet
 
-## Source Code
+### Source Code
 
 ```
 src
