@@ -7,17 +7,34 @@ To be added here: CI status
 * [nodejs](https://nodejs.org/en/) - used for build system
 * [clasp](https://www.npmjs.com/package/@google/clasp) - used to develop Google Apps locally 
 
-## Installation
-```bash
-$ git clone https://github.com/kofc7186/fishfry-google-square.git
-cd fishfry-google-square
-npm install @google/clasp
-```
+## How to edit locally
 
-## Run Locally
-```bash
-TODO:
-```
+If you want to make a copy, this should work (without being connected to square).
+1. Clone the Git repository:
+    ```bash
+    git clone https://github.com/kofc7186/fishfry-google-square.git
+    cd fishfry-google-square
+    npm install @google/clasp -g
+    ```
+1. Make a copy of **Master Fish Fry Sheet**
+1. In the new copy that was just created:
+    -   select "File/Project Properties"
+        - Under info tab, there is a field "script ID"
+        - Copy the "script ID" to your clipboard
+1. Edit the **.clasp.json** in the root directory of the repo with the value you copied in the previous step
+1. Install the NodeJS package from the git repo:
+    ```bash
+    npm install
+    ```
+1. Authenticate and authorize clasp to manipulate the project with the google account that has access to the new copy:
+    ```bash
+    clasp login
+    ```
+    This launches a browser and asks you to login via oauth. 
+1. Modify files locally, then push/pull the changes between your desktop and Google Apps
+    - **clasp push** will push the code on your local machine to the Google App
+    - **clasp pull** will pull the code from Google App to your local machine
+
 
 ## API Documentation
 The hosted JSDoc files can be found [here](https://kofc7186.github.io/fishfry-google-square/fishfry-google-square/0.1.0/).
@@ -36,12 +53,24 @@ TODO:
 
 These are classes used to interact with the Google infrastructure.
 
-- [Logger](https://developers.google.com/apps-script/reference/base/logger) - used to write out text to the debugging logs 
-- [PropertiesService](https://developers.google.com/apps-script/reference/properties/properties-service) - Allows scripts to store simple data in key-value pairs scoped to one script, one user of a script, or one document in which an add-on is used.
-- [HtmlService](https://developers.google.com/apps-script/reference/html/html-service) - Service for returning HTML and other text content from a script.
-- [UrlFetchApp](https://developers.google.com/apps-script/reference/url-fetch/url-fetch-app) - Fetch resources and communicate with other hosts over the Internet.
-- [SpreadsheetApp](https://developers.google.com/apps-script/reference/spreadsheet/spreadsheet-app) - This class allows users to open Google Sheets files and to create new ones. 
-- [DocumentApp](https://developers.google.com/apps-script/reference/document/document-app) - The document service creates and opens Documents that can be edited. 
+- [Logger](https://developers.google.com/apps-script/reference/base/logger) 
+    - used to write out text to the debugging logs 
+- [PropertiesService](https://developers.google.com/apps-script/reference/properties/properties-service) 
+    - Allows scripts to store simple data in key-value pairs scoped to one script, one user of a script, or one document in which an add-on is used.
+    - Used to retrieve the **SQUARE_ACCESS_TOKEN** attribute to communicate with Square
+- [HtmlService](https://developers.google.com/apps-script/reference/html/html-service) 
+    - Service for returning HTML and other text content from a script.
+    - Used to render HTML forms for user input
+    - Used to render response to websocket from Square 
+- [UrlFetchApp](https://developers.google.com/apps-script/reference/url-fetch/url-fetch-app) 
+    - Fetch resources and communicate with other hosts over the Internet.
+    - Used to make RESTful calls to Square
+- [SpreadsheetApp](https://developers.google.com/apps-script/reference/spreadsheet/spreadsheet-app) 
+    - This class allows users to open Google Sheets files and to create new ones.
+    - Used to manipulate the main Google Sheet 
+- [DocumentApp](https://developers.google.com/apps-script/reference/document/document-app) 
+    - The document service creates and opens Documents that can be edited.
+    - Used to retrieve the Print template, create new document based on data from Sheet
 
 ## Source Code
 
@@ -50,6 +79,6 @@ src
 ├── doPost.js - webhook callback for Square
 ├── fishfry.js - entry point for Google Sheets
 ├── html - form templates
-├── orm.js - 
+├── orm.js - helper functions to manipulate the Google Sheet and Workbooks within
 └── printLabels.js - generate label from order
 ```
