@@ -1,4 +1,4 @@
-# StMM Fish Fry - Square & Google Sheets
+# StMM Fish Fry - Google Sheets & Square
 
 To be added here: CI status
 
@@ -11,7 +11,11 @@ npm install
 clasp
 ```
 ## API Documentation
+JSDoc files can be found [here](https://kofc7186.github.io/fishfry-google-square/fishfry-google-square/0.1.0/).
 
 ## Prerequisites
-* nodejs (used for build system)
+* nodejs (used for build system): [https://nodejs.org/en/]
+
+## Spreadsheet
+[https://docs.google.com/spreadsheets/d/1NbNqn87RH-T9CoScqKejJlSxOo_CW4VMUnDKzgcE8TU/edit]
 
