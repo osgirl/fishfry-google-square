@@ -1,10 +1,54 @@
+var FF_SPREADSHEET_ID = '1NbNqn87RH-T9CoScqKejJlSxOo_CW4VMUnDKzgcE8TU';
+
 function onOpen() {
+  //TODO: Check for SQUARE_ACCESS_TOKEN in Properties; throw exception / warning if that is not present
+
   SpreadsheetApp.getUi()
       .createMenu('Station Menu')
       .addItem('Labeling Station', 'showLabelingSidebar')
       .addItem('Ready Station', 'showReadySidebar')
       .addItem('Closing Station', 'showClosingSidebar')
       .addToUi();
+}
+
+/**
+ * Get atomically incrementing order number
+ * 
+ * The Document Properties store is used to persist the value.
+ *
+ * @returns {integer} next order number for use
+ */
+function getOrderNumberAtomic() {
+  //TODO: be sure there is no possibility of deadlock here...
+
+  // get global lock before fetching property
+  var lock = LockService.getDocumentLock();
+  while (!lock.tryLock(1000)) {
+    Logger.log('failed to get lock, trying again');
+  }
+  // we have the lock if we've gotten this far
+  var next = null;
+
+  try {
+    var props = PropertiesService.getDocumentProperties();
+  
+    var current = props.getProperty('atomicOrderNumber');
+    if (current == null) { //not stored yet
+      next = "2018";
+    }
+    else {
+      next = parseInt(current) + 1;
+    }
+    props.setProperty('atomicOrderNumber', next.toString());
+  }
+  catch (e) {
+    Logger.log(e);
+  }
+  finally {
+    lock.releaseLock();
+  }
+
+  return next.toFixed();
 }
 
 function showLabelingSidebar() {
@@ -33,25 +77,28 @@ function showClosingSidebar() {
  * 
  * Assumes SQUARE_ACCESS_TOKEN for authentication is stored in Script Property of same name
  *
- * @param {string} locationId
+ * @param {string} location_id
  *   Location ID corresponding to Square Location
- * @param {string} orderId
+ * @param {string} order_id
  *   Order ID corresponding to Square Payment object
  * @returns {object} payment object from Square V1 API 
  *   https://docs.connect.squareup.com/api/connect/v1#datatype-payment
  * @throws Will throw an error if the API call to Square is not successful for any reason
  */
-function fetchOrderDetails(locationId, orderId){
+function fetchOrderDetails(location_id, order_id){
   var params = {
     headers: {
       "Authorization": "Bearer " + PropertiesService.getScriptProperties().getProperty("SQUARE_ACCESS_TOKEN")
     },
   };
   
-  var url = "https://connect.squareup.com/v1/" + locationId + "/payments/" + orderId;
+  var url = "https://connect.squareup.com/v1/" + location_id + "/payments/" + order_id;
   var response = UrlFetchApp.fetch(url, params);
   
-  return JSON.parse(response.getContentText());  
+  var result = JSON.parse(response.getContentText()); 
+  result.orderNumber = getOrderNumberAtomic();
+
+  return result;
 }
 
 /**
@@ -59,9 +106,9 @@ function fetchOrderDetails(locationId, orderId){
  * 
  * Assumes SQUARE_ACCESS_TOKEN for authentication is stored in Script Property of same name
  *
- * @param {string} locationId
+ * @param {string} location_id
  *   Location ID corresponding to Square Location
- * @param {string} orderId
+ * @param {string} order_id
  *   Order ID corresponding to Square Payment object
  * @param {string} created_at
  *   date when the order was created in RFC3339 format (e.g. 2016-01-15T00:00:00Z)
@@ -70,7 +117,7 @@ function fetchOrderDetails(locationId, orderId){
  * @throws Will throw an error if the transaction can not be found or
  *         if the API call to Square is not successful for any reason
  */
-function fetchTransactionMetadata(locationId, orderId, created_at){
+function fetchTransactionMetadata(location_id, order_id, created_at){
   var params = {
     headers: {
       "Authorization": "Bearer " + PropertiesService.getScriptProperties().getProperty("SQUARE_ACCESS_TOKEN")
@@ -78,7 +125,7 @@ function fetchTransactionMetadata(locationId, orderId, created_at){
   };
   
   // when sort_order parameter is ASC, the results will be inclusive of the record we're looking for.
-  var url = "https://connect.squareup.com/v2/locations/" + locationId + "/transactions?begin_time=" + created_at + "&sort_order=ASC";
+  var url = "https://connect.squareup.com/v2/locations/" + location_id + "/transactions?begin_time=" + created_at + "&sort_order=ASC";
   
   var response = UrlFetchApp.fetch(url, params);
   var responseObj = JSON.parse(response.getContentText());
@@ -96,10 +143,10 @@ function fetchTransactionMetadata(locationId, orderId, created_at){
   // the following for-each loop finds the appropriate transaction object that corresponds to the payment ID (aka tender.id)
   responseObj.transactions.some ( function(txn) {
     txn.tenders.some( function (tender){
-      if (tender.id == orderId) {
+      if (tender.id == order_id) {
         origin = txn.product; //REGISTER or ONLINE_STORE or EXTERNAL_API
         customer_id = tender.customer_id; //we store this to query the customer's last name
-        note = tender.note;
+        note = tender.note; //TODO: I'm not convinced I'm pulling the correct field here.
         return true;
       }  
     });
@@ -107,7 +154,7 @@ function fetchTransactionMetadata(locationId, orderId, created_at){
   });
   
   if (origin == "")  
-    throw "Transaction " + orderId + " not found in fetchTransactionMetadata!";
+    throw "Transaction " + order_id + " not found in fetchTransactionMetadata!";
   
   return {origin: origin, customer_id: customer_id, note: note};
 }
@@ -118,7 +165,7 @@ function fetchTransactionMetadata(locationId, orderId, created_at){
  * Assumes SQUARE_ACCESS_TOKEN for authentication is stored in Script Property of same name
  * Uses Square Connect V2 API as the V1 API does not expose customer objects
  *
- * @param {string} customerId
+ * @param {string} customer_id
  *   Customer ID corresponding to Square Customer Object
  * @returns {string} customer's last name
  * @throws Will throw an error if the API call to Square is not successful for any reason (including customer_id not found)
@@ -286,11 +333,12 @@ function upsertTransactionLog(location_id, payment_id){
    
       var lastName = fetchCustomerFamilyName(txnMetadata.customer_id);
       var result = {
-        "Order Number": orderDetails.id,
+        "Order Number": orderDetails.orderNumber,
+        "Payment ID": orderDetails.id,
         "Order Received Date/Time": orderDetails.created_at, //format for Date formatter
         "Last Name": lastName, //TODO: timing issue around fetching this prematurely?
         "Expedite": "No",
-        "Note on Order": "",
+        "Note on Order": txnMetadata.note,
         "Label Doc Link": createLabelFile(orderDetails, lastName, mealCounts.mealCount, mealCounts.soupCount),
         "Order Venue": (getStateFromOrigin(txnMetadata.origin) == "Present") ? "In Person" : "Online",
         "Order State": getStateFromOrigin(txnMetadata.origin),
@@ -309,7 +357,7 @@ function upsertTransactionLog(location_id, payment_id){
         "Soup": mealCounts.soupCount        
       };
       
-      var spreadsheet = new ManagedSpreadsheet('1NbNqn87RH-T9CoScqKejJlSxOo_CW4VMUnDKzgcE8TU');
+      var spreadsheet = new ManagedSpreadsheet(FF_SPREADSHEET_ID);
       var worksheet = spreadsheet.sheet("Current Event Transaction Log");
       worksheet.append(result);
       
@@ -333,18 +381,16 @@ function upsertTransactionLog(location_id, payment_id){
 /**
  * Searches transaction log to see if an entry exists for a given ID
  *
- * @param {string} order_id
- *   Order ID corresponding to Square Payment
+ * @param {string} payment_id
+ *   Payment ID corresponding to Square Payment (V1 transaction)
  * @returns {integer} row_index
  *   Returns the row number corresponding to the entry if present, -1 if not present
  */
-function searchTransactionLog(order_id){
+function searchTransactionLog(payment_id){
   
-  //TODO: move ID to global
-  var spreadsheet = new ManagedSpreadsheet('1NbNqn87RH-T9CoScqKejJlSxOo_CW4VMUnDKzgcE8TU');
+  var spreadsheet = new ManagedSpreadsheet(FF_SPREADSHEET_ID);
   var worksheet = spreadsheet.sheet("Current Event Transaction Log");
-  
-  return worksheet.rowIndex('Order Number', order_id);  
+  return worksheet.rowIndex('Payment ID', payment_id);  
 }
 
 function bob(){
