@@ -89,15 +89,90 @@
   <section class="readme">
     <article>
       <h1>StMM Fish Fry - Google Sheets &amp; Square</h1><p>To be added here: CI status</p>
-<h2>Usage</h2><pre class="prettyprint source lang-bash"><code>$ git clone https://github.com/kofc7186/fishfry-google-square.git
-cd fishfry-google-square
-npm install
-
-clasp</code></pre><h2>API Documentation</h2><p>JSDoc files can be found <a href="https://kofc7186.github.io/fishfry-google-square/fishfry-google-square/0.1.0/">here</a>.</p>
-<h2>Prerequisites</h2><ul>
-<li>nodejs (used for build system): [https://nodejs.org/en/]</li>
+<ul>
+<li><a href="#prerequisites">Prerequisites</a></li>
+<li><a href="#square-maintenance">Square Maintenance</a></li>
+<li><a href="#google-apps-maintenance">Google Apps Maintenance</a><ul>
+<li><a href="#api-documentation">API Documentation</a></li>
 </ul>
-<h2>Spreadsheet</h2><p>[https://docs.google.com/spreadsheets/d/1NbNqn87RH-T9CoScqKejJlSxOo_CW4VMUnDKzgcE8TU/edit]</p>
+</li>
+</ul>
+<h2>Prerequisites</h2><ul>
+<li><a href="https://git-scm.com/">git</a> - code repository</li>
+<li><a href="https://nodejs.org/en/">nodejs</a> - used for build system</li>
+<li><a href="https://www.npmjs.com/package/@google/clasp">clasp</a> - used to develop Google Apps locally </li>
+</ul>
+<h2>Square Maintenance</h2><h3>Add SQUARE_ACCESS_TOKEN</h3><p>In order to sync with Square, you'll need the <strong>SQUARE_ACCESS_TOKEN</strong> for the respective storefront.</p>
+<pre class="prettyprint source lang-bash"><code>TODO:</code></pre><h3>Setup webhooks on Square</h3><pre class="prettyprint source lang-bash"><code>TODO:</code></pre><h2>Google Apps Maintenance</h2><h3>Main Google Documents</h3><ul>
+<li><a href="https://drive.google.com/drive/folders/19A6FMlMWftvgrWq8Eycxfsb-8LMs2GeC">Google Drive Folder</a></li>
+<li><a href="https://docs.google.com/spreadsheets/d/1NbNqn87RH-T9CoScqKejJlSxOo_CW4VMUnDKzgcE8TU/edit">Master Fish Fry Sheet</a></li>
+<li><a href="https://docs.google.com/document/d/1rLpp1hhFASftN5VvGx2VFz_fKE2WoNqEhF2cJxW5YhI/edit">Label Template</a> </li>
+</ul>
+<h3>Setup webhooks on Google Apps</h3><pre class="prettyprint source lang-bash"><code>TODO:</code></pre><h3>How to edit Google Sheet scripts locally</h3><p>If you want to make a copy, this should work (without being connected to square).</p>
+<ol>
+<li>Clone the Git repository:<pre class="prettyprint source lang-bash"><code> git clone https://github.com/kofc7186/fishfry-google-square.git
+ cd fishfry-google-square
+ npm install @google/clasp -g</code></pre></li>
+<li>Make a copy of <strong>Master Fish Fry Sheet</strong></li>
+<li>In the new copy that was just created:<ul>
+<li>select &quot;File/Project Properties&quot;<ul>
+<li>Under info tab, there is a field &quot;script ID&quot;</li>
+<li>Copy the &quot;script ID&quot; to your clipboard</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Edit the <strong>.clasp.json</strong> in the root directory of the repo with the value you copied in the previous step</li>
+<li>Install the NodeJS package from the git repo:<pre class="prettyprint source lang-bash"><code> npm install</code></pre></li>
+<li>Authenticate and authorize clasp to manipulate the project with the google account that has access to the new copy:<pre class="prettyprint source lang-bash"><code> clasp login</code></pre> This launches a browser and asks you to login via oauth.</li>
+<li>Enable <strong>Apps Script API</strong> by visiting <a href="https://script.google.com/home/usersettings">Apps Script API</a> and toggle <strong>Google Apps Script API</strong> to <strong>ON</strong>.  </li>
+<li>Modify files locally, then push/pull the changes between your desktop and Google Apps<ul>
+<li><strong>clasp push</strong> will push the code on your local machine to the Google App</li>
+<li><strong>clasp pull</strong> will pull the code from Google App to your local machine</li>
+</ul>
+</li>
+</ol>
+<h3>API Documentation</h3><p>The hosted JSDoc files can be found <a href="https://kofc7186.github.io/fishfry-google-square/fishfry-google-square/0.1.0/">here</a>.</p>
+<p>To generate updated documentation:</p>
+<pre class="prettyprint source lang-bash"><code>TODO:</code></pre><h3>Google Apps JavaScript Classes</h3><p>These are classes used to interact with the Google infrastructure.</p>
+<ul>
+<li><a href="https://developers.google.com/apps-script/reference/base/logger">Logger</a> <ul>
+<li>used to write out text to the debugging logs </li>
+</ul>
+</li>
+<li><a href="https://developers.google.com/apps-script/reference/properties/properties-service">PropertiesService</a> <ul>
+<li>Allows scripts to store simple data in key-value pairs scoped to one script, one user of a script, or one document in which an add-on is used.</li>
+<li>Used to retrieve the <strong>SQUARE_ACCESS_TOKEN</strong> attribute to communicate with Square</li>
+</ul>
+</li>
+<li><a href="https://developers.google.com/apps-script/reference/html/html-service">HtmlService</a> <ul>
+<li>Service for returning HTML and other text content from a script.</li>
+<li>Used to render HTML forms for user input</li>
+<li>Used to render response to websocket from Square </li>
+</ul>
+</li>
+<li><a href="https://developers.google.com/apps-script/reference/url-fetch/url-fetch-app">UrlFetchApp</a> <ul>
+<li>Fetch resources and communicate with other hosts over the Internet.</li>
+<li>Used to make RESTful calls to Square</li>
+</ul>
+</li>
+<li><a href="https://developers.google.com/apps-script/reference/spreadsheet/spreadsheet-app">SpreadsheetApp</a> <ul>
+<li>This class allows users to open Google Sheets files and to create new ones.</li>
+<li>Used to manipulate the main Google Sheet </li>
+</ul>
+</li>
+<li><a href="https://developers.google.com/apps-script/reference/document/document-app">DocumentApp</a> <ul>
+<li>The document service creates and opens Documents that can be edited.</li>
+<li>Used to retrieve the Print template, create new document based on data from Sheet</li>
+</ul>
+</li>
+</ul>
+<h3>Source Code</h3><pre class="prettyprint source"><code>src
+├── doPost.js - webhook callback for Square
+├── fishfry.js - entry point for Google Sheets
+├── html - form templates
+├── orm.js - helper functions to manipulate the Google Sheet and Workbooks within
+└── printLabels.js - generate label from order</code></pre>
     </article>
   </section>
 

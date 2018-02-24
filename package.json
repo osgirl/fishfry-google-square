@@ -1,7 +1,7 @@
 {
   "name": "fishfry-google-square",
   "version": "0.1.0",
-  "license": "GPL-3.0-or-later",
+  "license": "GPL-3.0+",
   "description": "An implementation of the StMM Fish Fry processing system",
   "main": "src/fishfry.js",
   "contributors": [
@@ -9,11 +9,13 @@
   ],
   "readmeFilename": "README.md",
   "scripts": {
-    "make-docs": "node_modules/.bin/jsdoc -c .jsdoc.json --verbose"
+    "make-docs": "node_modules/.bin/jsdoc -c .jsdoc.json --verbose",
+    "precommit": "npm run make-docs"
   },
   "devDependencies": {
     "@freshes/jsdoc-template": "^1.0.0",
     "@google/clasp": "^1.1.1",
+    "husky": "^0.14.3",
     "jsdoc": "^3.5.5"
   },
   "repository": {
