@@ -45,4 +45,4 @@ Worksheet.prototype.upsertTransaction = function (order) {
       //TODO: update order, then update row?
       //TODO: determine if refund, then delete row from table
     }
- }
+}
