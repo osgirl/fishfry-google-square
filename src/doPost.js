@@ -31,10 +31,10 @@ function doPost(e) {
   
   // PAYMENT_UPDATED will be sent regardless of creation or update
   if (input.event_type == 'PAYMENT_UPDATED'){
-    upsertTransactionLog(input.location_id, input.entity_id);
-    
-    //TODO: remove line below
-    //SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Master").appendRow(["post2",JSON.stringify(e)]);
+    var fmt_order = new FormatOrder();
+    var worksheet = new Worksheet();
+    var txn = fmt_order.SquareTransactionToSheet(input.location_id, input.entry_id);
+    worksheet.upsertTransaction(txn);
   }
   else {
     //TODO: delete this and squelch this case
