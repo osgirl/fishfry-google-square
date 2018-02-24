@@ -1,7 +1,8 @@
+//this is a subset of code pulled from https://github.com/jsoma/gs-spreadsheet-manager
+
 function ManagedSpreadsheet(key, options) {
   if(!options)
     options = {}
-  Logger.log("enter ManagedSpreadsheet");
   this.spreadsheet = SpreadsheetApp.openById(key);
   this.worksheets = {};
   this.cache = !!options.cache;
@@ -84,6 +85,22 @@ ManagedWorksheet.prototype.columnNames = function() {
   return this._columnNames;
 }
 
+ManagedWorksheet.prototype.getColumnLetter = function(key) {
+  var idx = this.columnNames().indexOf(key);
+  if (idx == -1)
+    return "";
+  else {
+    idx += 1; // need to account for 0-offset
+    var temp, letter = '';
+    while (idx > 0) {
+      temp = (idx - 1) % 26;
+      letter = String.fromCharCode(temp + 65) + letter;
+      idx = (idx - temp - 1) / 26;
+    }
+    return letter;
+  }
+}
+
 // data should be in the form {key: value, key: value}
 ManagedWorksheet.prototype.append = function(data, batch) {
   var toAppend;
@@ -161,6 +178,20 @@ ManagedWorksheet.prototype.shift = function(data) {
   var row = getRow(2);
   this.removeRow(2);
   return this.rowToObject(row);
+}
+
+ManagedWorksheet.prototype.findAllWhere = function(callback) {
+  var rowLength = this.getLastRow();
+
+  var result = [];
+  // start counting at 2 because index of first row is 1, and that first row is the header
+  for(var rowIndex=2;rowIndex<=rowLength;rowIndex++) {
+    var obj = this.getRowAsObject(rowIndex);
+    if(callback.call(this, obj, rowIndex)) {
+      result.push(obj);
+    }
+  }
+  return result;
 }
 
 ManagedWorksheet.prototype.deleteWhere = function(callback) {
@@ -272,7 +303,7 @@ ManagedWorksheet.prototype.getCol = function(colIndex) {
   return values;
 }
 
-ManagedWorksheet.prototype.indices = function(key, value) {
+ManagedWorksheet.prototype.indices = function(key) {
   if(!this._indices)
     this._indices = {}
   

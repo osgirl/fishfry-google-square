@@ -10,7 +10,7 @@
   "readmeFilename": "README.md",
   "scripts": {
     "make-docs": "node_modules/.bin/jsdoc -c .jsdoc.json --verbose",
-    "precommit": "npm run make-docs"
+    "precommit": "npm run make-docs && git add docs/"
   },
   "devDependencies": {
     "@freshes/jsdoc-template": "^1.0.0",

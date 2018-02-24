@@ -72,7 +72,7 @@
       K of C 7186 Fish Fry: Google & Square
     </h3>
 
-    <h3 id="global-nav">Global</h3><ul><li><a href="global.html#doPost">doPost</a></li></ul>
+    <h3 id="global-nav">Global</h3><ul><li><a href="global.html#convertISODate">convertISODate</a></li><li><a href="global.html#doPost">doPost</a></li><li><a href="global.html#notifySidebars">notifySidebars</a></li><li><a href="global.html#onEdit">onEdit</a></li></ul>
   </nav>
 
   <div id="main">
@@ -114,26 +114,49 @@ Worksheet.prototype.searchTransactionLog = function (payment_id){
 /**
  * Appends or updates a row in the current transaction sheet for a new inbound transaction
  *
- * @param {object} txnMetadata
- *   Output from fetchTransactionMetadata()
- *   https://docs.connect.squareup.com/api/connect/v1#datatype-payment
- * @param {obj} orderDetails
- *   Output from fetchOrderDetails()
+ * @param {object} proposedOrder
+ *   proposed Order in Sheet object schema to be committed to transaction log
  */
-Worksheet.prototype.upsertTransaction = function (order) {
-    // if the transaction hasn't been inserted yet
-    if (this.searchTransactionLog(order['Order Number']) == -1) {
+Worksheet.prototype.upsertTransaction = function (proposedOrder) {
+  var rowIndex = this.searchTransactionLog(proposedOrder['Payment ID']);
+  
+  if (rowIndex == -1) {
+    // the transaction hasn't been inserted yet; let's just insert it
+    this.worksheet.append(proposedOrder);
 
-      this.worksheet.append(order);
+    //set formula for wait time in "Current Wait Time" column for the row you just inserted
+    if (proposedOrder['Order State'] === "Present") {
+      // fetch rowIndex again because it should be in spreadsheet now
+      rowIndex = this.searchTransactionLog(proposedOrder['Payment ID']);
 
-      // TODO: set formula for wait time in "Current Wait Time" column for the row you just inserted
+      //TODO: all this logic should get put into a common method for re use when an online order is moved into present state
+      // find the column letters that represents "current wait time", "order state", "time present"      
+      var curWaitTimeCell = this.worksheet.getColumnLetter("Current Wait Time") + rowIndex;
+      var orderStateCell  = this.worksheet.getColumnLetter("Order State") + rowIndex;
+      var timePresentCell = this.worksheet.getColumnLetter("Time Present") + rowIndex;
+      
+      var curWaitTimeFormula = "IF(OR("+orderStateCell+"=\"Present\","+
+                                        orderStateCell+"=\"Labeled\","+
+                                        orderStateCell+"=\"Ready\"),NOW()-"+timePresentCell+",\"\")";
+      
+      this.worksheet.worksheet.getRange(curWaitTimeCell).setFormula(curWaitTimeFormula); 
+
+      var finalWaitTimeCell = this.worksheet.getColumnLetter("Final Wait Time") + rowIndex;
+      var timeClosedCell    = this.worksheet.getColumnLetter("Time Closed") + rowIndex;
+      
+      var finalWaitTimeFormula = "IF("+orderStateCell+"=\"Closed\","+timeClosedCell+"-"+timePresentCell+",\"\")";
+      
+      this.worksheet.worksheet.getRange(finalWaitTimeCell).setFormula(finalWaitTimeFormula); 
     }
-    else{
-      //update
+  }
+  else{
+    // the transaction has already been inserted; we need to update it
+    var existingOrder = this.worksheet.getRowAsObject(rowIndex);  
+    //we need to determine the relevant delta between new and old
+    // what if there is a "reversion in state?"
 
-      //TODO: update order, then update row?
-      //TODO: determine if refund, then delete row from table
-    }
+    //TODO: determine if refund, then delete row from table
+  }
 }
 </code></pre>
   </article>

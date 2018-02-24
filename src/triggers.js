@@ -11,6 +11,8 @@ function onOpen() {
       .createMenu('Simulate')
       .addItem('Simulate New Order', 'simulateNewOrder')
       .addToUi();
+  
+  //TODO: validate/install triggers
 }
 
 function simulateNewOrder() {
@@ -44,3 +46,33 @@ function showClosingSidebar() {
                         .setWidth(300);
   SpreadsheetApp.getUi().showSidebar(html);
 }
+
+/**
+ * This trigger will fire when a human edits the spreadsheet contents. It does not fire when a method
+ * within these scripts append a row to the spreadsheet.
+ */
+function onEdit(e) {
+  //TOOD: scan for any rows that have Present but nothing in current wait time
+  notifySidebars();
+}
+
+/**
+ * This scans the transaction log, and sends updated subsets of data to the various sidebar views.
+ */
+function notifySidebars() {
+  var worksheet = new Worksheet();
+  var allOrders = worksheet.worksheet.all();
+  
+  var presentOrders = allOrders.filter(function (order) {
+    return order["Order State"] === "Present";
+  });
+  
+  var labeledOrders = allOrders.filter(function (order) {
+    return order["Order State"] === "Labeled";
+  });
+  
+  var readyOrders = allOrders.filter(function (order) {
+    return order["Order State"] === "Ready";
+  });
+  
+}    

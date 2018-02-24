@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <title>
-      doPost.js - Documentation
+      triggers.js - Documentation
   </title>
 
   <link href="https://www.braintreepayments.com/images/favicon-ccda0b14.png" rel="icon" type="image/png">
@@ -78,7 +78,7 @@
   <div id="main">
     
       <h1 class="page-title">
-        doPost.js
+        triggers.js
       </h1>
     
 
@@ -87,45 +87,84 @@
 
 <section>
   <article>
-    <pre class="prettyprint source linenums"><code>/**
- * This script processes the webhook request from the Square Connect V1 API which
- * indicates that an order has been created or updated. We use the information
- * passed in the webhook request to query the Square Connect API for additional
- * order information (meals, sides, quantities, etc).
- * 
- * NOTE: Google Apps Script will not show us POST headers, so we'll have to trust that 
- * the input is valid from the webhook... normally we should be doing an HMAC-SHA1 on
- * a request header, but since GAS won't show us the value we can't validate it.
- * 
- * We are expecting data in payload that looks like this:
- * {
- *   "merchant_id": "18YC4JBH91E1H",
- *   "location_id": "JGHJ0343",
- *   "event_type": "PAYMENT_UPDATED",
- *   "entity_id": "Jq74mCczmFXk1tC10GB"
- * }
- * 
- * https://docs.connect.squareup.com/api/connect/v1#setupwebhooks
+    <pre class="prettyprint source linenums"><code>function onOpen() {
+  //TODO: Check for SQUARE_ACCESS_TOKEN in Properties; throw exception / warning if that is not present
+  SpreadsheetApp.getUi()
+      .createMenu('Station Menu')
+      .addItem('Labeling Station', 'showLabelingSidebar')
+      .addItem('Ready Station', 'showReadySidebar')
+      .addItem('Closing Station', 'showClosingSidebar')
+      .addToUi();
+
+  SpreadsheetApp.getUi()
+      .createMenu('Simulate')
+      .addItem('Simulate New Order', 'simulateNewOrder')
+      .addToUi();
+  
+  //TODO: validate/install triggers
+}
+
+function simulateNewOrder() {
+  var fmt_order = new FormatOrder();
+  var worksheet = new Worksheet();
+  var simulation = new simulateSquare();
+  var new_txn = simulation.NewTransaction();
+  var new_order = simulation.NewOrder();
+  var last_name = 'simulated_' + simulation.randomString(10);
+  var txn = fmt_order.ConvertSquareToSheet(new_txn, new_order, last_name);
+  worksheet.upsertTransaction(txn);
+}
+
+function showLabelingSidebar() {
+  var html = HtmlService.createHtmlOutputFromFile('src/html/labelingSidebar')
+                        .setTitle('Labeling sidebar')
+                        .setWidth(300);
+  SpreadsheetApp.getUi().showSidebar(html);
+}
+
+function showReadySidebar() {
+  var html = HtmlService.createHtmlOutputFromFile('src/html/readySidebar')
+                        .setTitle('Ready sidebar')
+                        .setWidth(300);
+  SpreadsheetApp.getUi().showSidebar(html);
+}
+
+function showClosingSidebar() {
+  var html = HtmlService.createHtmlOutputFromFile('src/html/closingSidebar')
+                        .setTitle('Closing sidebar')
+                        .setWidth(300);
+  SpreadsheetApp.getUi().showSidebar(html);
+}
+
+/**
+ * This trigger will fire when a human edits the spreadsheet contents. It does not fire when a method
+ * within these scripts append a row to the spreadsheet.
  */
-function doPost(e) {  
-  if (e.hasOwnProperty('postData') &amp;&amp; e.postData.type != "application/json")
-    throw "Invalid Input Type!"
+function onEdit(e) {
+  //TOOD: scan for any rows that have Present but nothing in current wait time
+  notifySidebars();
+}
+
+/**
+ * This scans the transaction log, and sends updated subsets of data to the various sidebar views.
+ */
+function notifySidebars() {
+  var worksheet = new Worksheet();
+  var allOrders = worksheet.worksheet.all();
   
-  var input = JSON.parse(e.postData.contents);
+  var presentOrders = allOrders.filter(function (order) {
+    return order["Order State"] === "Present";
+  });
   
-  console.log("webhook: " + e.postData.contents);
+  var labeledOrders = allOrders.filter(function (order) {
+    return order["Order State"] === "Labeled";
+  });
   
-  // PAYMENT_UPDATED will be sent regardless of creation or update
-  if (input.event_type == 'PAYMENT_UPDATED'){
-    var fmt_order = new FormatOrder();
-    var worksheet = new Worksheet();
-    var txn = fmt_order.SquareTransactionToSheet(input.location_id, input.entry_id);
-    worksheet.upsertTransaction(txn);
-  }
+  var readyOrders = allOrders.filter(function (order) {
+    return order["Order State"] === "Ready";
+  });
   
-  // return an HTTP 200 OK with no content for webhook request
-  return HtmlService.createHtmlOutput("");
-}</code></pre>
+}    </code></pre>
   </article>
 </section>
 

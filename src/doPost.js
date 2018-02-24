@@ -1,27 +1,24 @@
 /**
-
-This script processes the webhook request from the Square Connect V1 API which
-indicates that an order has been created or updated. We use the information
-passed in the webhook request to query the Square Connect API for additional
-order information (meals, sides, quantities, etc).
-
-**/
-function doPost(e) {
-  
-  /*
-  NOTE: Google Apps Script will not show us POST headers, so we'll have to trust that 
-  the input is valid from the webhook... normally we should be doing an HMAC-SHA1 on
-  a request header, but since GAS won't show us the value we can't validate it.
-  
-  We are expecting data in payload that looks like this:
-  {
-    "merchant_id": "18YC4JBH91E1H",
-    "location_id": "JGHJ0343",
-    "event_type": "PAYMENT_UPDATED",
-    "entity_id": "Jq74mCczmFXk1tC10GB"
-  }
-  */
-  
+ * This script processes the webhook request from the Square Connect V1 API which
+ * indicates that an order has been created or updated. We use the information
+ * passed in the webhook request to query the Square Connect API for additional
+ * order information (meals, sides, quantities, etc).
+ * 
+ * NOTE: Google Apps Script will not show us POST headers, so we'll have to trust that 
+ * the input is valid from the webhook... normally we should be doing an HMAC-SHA1 on
+ * a request header, but since GAS won't show us the value we can't validate it.
+ * 
+ * We are expecting data in payload that looks like this:
+ * {
+ *   "merchant_id": "18YC4JBH91E1H",
+ *   "location_id": "JGHJ0343",
+ *   "event_type": "PAYMENT_UPDATED",
+ *   "entity_id": "Jq74mCczmFXk1tC10GB"
+ * }
+ * 
+ * https://docs.connect.squareup.com/api/connect/v1#setupwebhooks
+ */
+function doPost(e) {  
   if (e.hasOwnProperty('postData') && e.postData.type != "application/json")
     throw "Invalid Input Type!"
   
@@ -35,10 +32,6 @@ function doPost(e) {
     var worksheet = new Worksheet();
     var txn = fmt_order.SquareTransactionToSheet(input.location_id, input.entry_id);
     worksheet.upsertTransaction(txn);
-  }
-  else {
-    //TODO: delete this and squelch this case
-    SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Master").appendRow(["post",input.event_type]);
   }
   
   // return an HTTP 200 OK with no content for webhook request
