@@ -78,7 +78,6 @@ FormatOrder.prototype.getStateFromOrigin = function (origin){
 FormatOrder.prototype.SquareTransactionToSheet = function (location_id, payment_id) {
   // try to get updated order details from Square
   var orderDetails = this.api.OrderDetails(location_id, payment_id);
-  orderDetails.orderNumber = this.getOrderNumberAtomic();
   var txnMetadata = this.api.TransactionMetadata(location_id, payment_id, orderDetails.created_at);
   var lastName = this.api.CustomerFamilyName(txnMetadata.customer_id);
   return this.ConvertSquareToSheet(txnMetadata, orderDetails, lastName);
@@ -107,9 +106,9 @@ FormatOrder.prototype.ConvertSquareToSheet = function(txnMetadata, orderDetails,
 
   // format data for Sheet
   var result = {
-    "Order Number": orderDetails.orderNumber,
+    "Order Number": this.getOrderNumberAtomic(),
     "Payment ID": orderDetails.id,
-    "Order Received Date/Time": orderDetails.created_at, //format for Date formatter
+    "Order Received Date/Time": convertISODate(new Date(orderDetails.created_at)),
     "Last Name": lastName, //TODO: timing issue around fetching this prematurely?
     "Expedite": "No",
     "Note on Order": txnMetadata.note,//TODO: not sure this is the correct field
@@ -117,7 +116,7 @@ FormatOrder.prototype.ConvertSquareToSheet = function(txnMetadata, orderDetails,
     "Order Venue": (this.getStateFromOrigin(txnMetadata.origin) == "Present") ? "In Person" : "Online",
     "Order State": this.getStateFromOrigin(txnMetadata.origin),
     "Square Receipt Link": orderDetails.receipt_url,
-    "Time Present": (this.getStateFromOrigin(txnMetadata.origin) == "Present") ? new Date().toISOString() : "", //TODO: fix date formatting
+    "Time Present": (this.getStateFromOrigin(txnMetadata.origin) == "Present") ? convertISODate(new Date()) : "", //TODO: fix date formatting
     "Total Meals": mealCount,
     "Total Soups": soupCount,
 //    "Breaded Fish": mealCounts.breadedFishAdult + mealCounts.breadedFishChild + (mealCounts.comboBreadedAdult + mealCounts.comboBreadedChild)*.5,  //TODO: weight based on combo, adult vs child servings from "Settings" sheet
@@ -135,4 +134,15 @@ FormatOrder.prototype.ConvertSquareToSheet = function(txnMetadata, orderDetails,
   }
 
   return result;
+}
+
+/**
+ * Formats strings into Google Sheets-compliant output as: 03/14/2018 05:12PM
+ * 
+ * @param {Date} date
+ *   input date object to be formatted
+ * @returns {string} formatted date
+ */
+function convertISODate(date){
+  return Utilities.formatDate(date, "EST", "MM/dd/yyyy hh:mma");
 }

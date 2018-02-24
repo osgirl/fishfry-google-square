@@ -1,13 +1,37 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <base target="_top">
-  </head>
-  <body>
-    Print Label <input type="text"/> <input type="button" value="Print" onclick="google.script.host.close()" /> <br/>
-    Reprint Label <input type="text"/> <input type="button" value="Reprint" onclick="google.script.host.close()" /> <br/>
-    
-  </body>
-</html>
+<link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
+<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css">
 
+<div class="widget">
+  <fieldset>
+    <legend>Filter Orders: </legend>
+    <label for="radio-1">All</label>
+    <input type="radio" name="radio-1" id="radio-1" checked="true">
+    <label for="radio-1">Odd</label>
+    <input type="radio" name="radio-1" id="radio-2">
+    <label for="radio-2">Even</label>
+    <input type="radio" name="radio-1" id="radio-3">
+  </fieldset>
+</div>
+<div class="orderListDiv">
+  <ul id="orderList"></ul>
+</div>
+<div class="reprintDiv">
+  <fieldset>
+    <legend>Reprint Labels:</legend>
+    <input type="text" name="reprint" id="reprintOrderNumber"/>
+    <input type="button" name="reprint" value="Reprint" onclick=""/>
+    <!--upon submit, clear field -->
+  </fieldset>
+</div>
+ 
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+<script>
 
+//TODO: onchange of radio-1 - apply filter on list
+//TODO: write function that will call GAS to invoke cloud print API, change order state, remove from list
+  $( function() {
+    $( "input" ).checkboxradio();
+    $( "fieldset" ).controlgroup();
+  } );
+</script>

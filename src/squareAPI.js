@@ -97,7 +97,7 @@ squareAPI.prototype.TransactionMetadata = function (location_id, order_id, creat
 
   // because we're searching on a time-based window, the call may return up to 50 transactions (via pagination).
   // we safely? assume that our transactional load is so low that we do not receive more than 50 transactions within the same second.
-  // the following for-each loop finds the appropriate transaction object that corresponds to the payment ID (aka tender.id)
+  // the following loop finds the appropriate transaction object that corresponds to the payment ID (aka tender.id)
   responseObj.transactions.some ( function(txn) {
     txn.tenders.some( function (tender){
       if (tender.id == order_id) {
