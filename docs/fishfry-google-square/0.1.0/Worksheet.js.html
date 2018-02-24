@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <title>
-      doPost.js - Documentation
+      Worksheet.js - Documentation
   </title>
 
   <link href="https://www.braintreepayments.com/images/favicon-ccda0b14.png" rel="icon" type="image/png">
@@ -78,7 +78,7 @@
   <div id="main">
     
       <h1 class="page-title">
-        doPost.js
+        Worksheet.js
       </h1>
     
 
@@ -87,52 +87,55 @@
 
 <section>
   <article>
-    <pre class="prettyprint source linenums"><code>/**
+    <pre class="prettyprint source linenums"><code>function Worksheet(spreadsheet_id, worksheet_name) {
+    spreadsheet_id = '1NbNqn87RH-T9CoScqKejJlSxOo_CW4VMUnDKzgcE8TU';
+    worksheet_name = "Current Event Transaction Log";
 
-This script processes the webhook request from the Square Connect V1 API which
-indicates that an order has been created or updated. We use the information
-passed in the webhook request to query the Square Connect API for additional
-order information (meals, sides, quantities, etc).
+    // https://developers.google.com/apps-script/reference/spreadsheet/spreadsheet-app#openbyidid
+    // The code below opens a spreadsheet using its ID and logs the name for it.
+    // Note that the spreadsheet is NOT physically opened on the client side.
+    // It is opened on the server only (for modification by the script).
+    this.spreadsheet = new ManagedSpreadsheet(spreadsheet_id);
+    this.worksheet = this.spreadsheet.sheet(worksheet_name);
+}
 
-**/
-function doPost(e) {
-  
-  /*
-  NOTE: Google Apps Script will not show us POST headers, so we'll have to trust that 
-  the input is valid from the webhook... normally we should be doing an HMAC-SHA1 on
-  a request header, but since GAS won't show us the value we can't validate it.
-  
-  We are expecting data in payload that looks like this:
-  {
-    "merchant_id": "18YC4JBH91E1H",
-    "location_id": "JGHJ0343",
-    "event_type": "PAYMENT_UPDATED",
-    "entity_id": "Jq74mCczmFXk1tC10GB"
-  }
-  */
-  
-  if (e.hasOwnProperty('postData') &amp;&amp; e.postData.type != "application/json")
-    throw "Invalid Input Type!"
-  
-  var input = JSON.parse(e.postData.contents);
-  
-  console.log("webhook: " + e.postData.contents);
-  
-  // PAYMENT_UPDATED will be sent regardless of creation or update
-  if (input.event_type == 'PAYMENT_UPDATED'){
-    var fmt_order = new FormatOrder();
-    var worksheet = new Worksheet();
-    var txn = fmt_order.SquareTransactionToSheet(input.location_id, input.entry_id);
-    worksheet.upsertTransaction(txn);
-  }
-  else {
-    //TODO: delete this and squelch this case
-    SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Master").appendRow(["post",input.event_type]);
-  }
-  
-  // return an HTTP 200 OK with no content for webhook request
-  return HtmlService.createHtmlOutput("");
-}</code></pre>
+/**
+ * Searches transaction log to see if an entry exists for a given ID
+ *
+ * @param {string} payment_id
+ *   Payment ID corresponding to Square Payment
+ * @returns {integer} row_index
+ *   Returns the row number corresponding to the entry if present, -1 if not present
+ */
+Worksheet.prototype.searchTransactionLog = function (payment_id){
+  return this.worksheet.rowIndex('Payment ID', payment_id);
+}
+
+/**
+ * Appends or updates a row in the current transaction sheet for a new inbound transaction
+ *
+ * @param {object} txnMetadata
+ *   Output from fetchTransactionMetadata()
+ *   https://docs.connect.squareup.com/api/connect/v1#datatype-payment
+ * @param {obj} orderDetails
+ *   Output from fetchOrderDetails()
+ */
+Worksheet.prototype.upsertTransaction = function (order) {
+    // if the transaction hasn't been inserted yet
+    if (this.searchTransactionLog(order['Order Number']) == -1) {
+
+      this.worksheet.append(order);
+
+      // TODO: set formula for wait time in "Current Wait Time" column for the row you just inserted
+    }
+    else{
+      //update
+
+      //TODO: update order, then update row?
+      //TODO: determine if refund, then delete row from table
+    }
+}
+</code></pre>
   </article>
 </section>
 
