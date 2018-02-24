@@ -1,7 +1,7 @@
 function ManagedSpreadsheet(key, options) {
   if(!options)
     options = {}
-  Logger.log("in ctor");
+  Logger.log("enter ManagedSpreadsheet");
   this.spreadsheet = SpreadsheetApp.openById(key);
   this.worksheets = {};
   this.cache = !!options.cache;
