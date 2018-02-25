@@ -97,14 +97,25 @@ These are classes used to interact with the Google infrastructure.
 - [DocumentApp](https://developers.google.com/apps-script/reference/document/document-app) 
     - The document service creates and opens Documents that can be edited.
     - Used to retrieve the Print template, create new document based on data from Sheet
-
+- [LockService](https://developers.google.com/apps-script/reference/lock/lock-service)
+    - Prevents concurrent access to sections of code.
+    - Used to retrive atomic human interpretable order number (i.e. auto-increment)
+- [Utilities](https://developers.google.com/apps-script/reference/utilities/utilities)
+    - This service provides utilities for string encoding/decoding, date formatting, JSON manipulation, and other miscellaneous tasks.
+    - Used for date/time formatting
+    
 ### Source Code
 
 ```
-src
-├── doPost.js - webhook callback for Square
-├── fishfry.js - entry point for Google Sheets
-├── html - form templates
-├── orm.js - helper functions to manipulate the Google Sheet and Workbooks within
-└── printLabels.js - generate label from order
+└── src
+    ├── FormatOrder.js - used to take input from Square API and format it to insert into Google Sheets
+    ├── Worksheet.js - manipulation to the Worksheet Transactions
+    ├── doPost.js - webhook callback for Square
+    ├── html - form templates
+    ├── menuItems.js - objects for items customers may order, and what ingredients are contained within each order
+    ├── orm.js - helper functions to manipulate the Google Sheet and Workbooks within
+    ├── printLabels.js - generate label from an order, as well as send the label to the printer spool
+    ├── simulateSquare.js - testing helper to simulate data from Square
+    ├── squareAPI.js - simulate responses from Square's RESTful APIs (used in test only) 
+    └── triggers.js - JavaScript trigger functions (i.e. entry point for Google Sheets)
 ```
