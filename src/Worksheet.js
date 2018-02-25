@@ -79,57 +79,66 @@ Worksheet.prototype.upsertTransaction = function (proposedOrder) {
   }
 }
 
-Worksheet.prototype.printLabel = function(orderNumber) {
+Worksheet.prototype.reprintLabel = function (orderNumber) {
+  this.printLabel(orderNumber, false);
+}
+
+Worksheet.prototype.printLabel = function(orderNumber, advanceState) {
+  if (typeof(advanceState)==='undefined'){
+    advanceState = true;
+  }
+
   var rowIndex = this.searchForTransaction('Order Number', parseInt(orderNumber));
   if (rowIndex == -1) {
     Logger.log("Unable to locate Order Number: " + orderNumber);
     return;
   }
 
-  // retrive filename from row
-  var labelCell = this.worksheet.getColumnLetter('Label Doc Link') + rowIndex;
-  var fileUrl = this.worksheet.worksheet.getRange(labelCell).getValue();;
-  if (fileUrl == "") {
+  var order = this.worksheet.getRowAsObject(rowIndex);
+  // retrieve filename from row
+  if (order['Label Doc Link'] == "") {
     // the label was not generated yet, so attempt now
-    fileUrl = createLabelFileFromSheet(this.worksheet.getRowAsObject(rowIndex));
-    this.worksheet.worksheet.getRange(labelCell).setValue(fileUrl);
+    order['Label Doc Link'] = createLabelFileFromSheet(order);
+    this.worksheet.update(rowIndex, order)
   }
 
-  if (printLabelFromFile(fileUrl) !== true) {
+  if (printLabelFromFile(order['Label Doc Link']) !== true) {
     Logger.log('Print was unsuccessful for order: ' + orderNumber);
     return;
   }
-  this.advanceState(orderNumber);
+  if (advanceState) {
+    this.advanceState(orderNumber);
+  }
 }
 
 Worksheet.prototype.advanceState = function(orderNumber) {
-  var column = 'Order State';
   var rowIndex = this.searchForTransaction('Order Number', parseInt(orderNumber));
   if (rowIndex == -1) {
     Logger.log("Unable to locate Order Number: " + orderNumber);
     return;
   }
 
-  // locate existing value
-  var orderStateCell  = this.worksheet.getColumnLetter(column) + rowIndex;
-  var current_state = this.worksheet.worksheet.getRange(orderStateCell).getValue();
+  var order = this.worksheet.getRowAsObject(rowIndex);
+  
+  // locate current state in state machine
+  var current_state = order['Order State'];
   var stateIndex = this.order_states.indexOf(current_state);
   if (stateIndex == this.order_states.length - 1) {
-    Logger.log("Order: " + orderNumber + " is already at the end of the State Machine!");
-    return;
+    throw "Order: " + orderNumber + " is already at the end of the State Machine!";
   }
 
   // increment state
   var new_state = this.order_states[stateIndex + 1];
 
-  // update state
-  this.worksheet.worksheet.getRange(orderStateCell).setValue(new_state);
-
-  // update state time
-  var timeCell = this.worksheet.getColumnLetter('Time ' + new_state);
-  if (timeCell == "") {
-    Logger.log('State: ' + new_state + ' is not a column in the spreadsheet .. but probably should be?')
-    return;
+  // update state in object
+  order['Order State'] = new_state;
+  
+  // test to make sure field is in spreadsheet
+  if (!order.hasOwnProperty('Time ' + new_state)) {
+    throw 'State: ' + new_state + ' is not a column in the spreadsheet .. but probably should be?';
   }
-  this.worksheet.worksheet.getRange(timeCell+rowIndex).setValue(convertISODate(new Date()));
+  // update state time in object
+  order['Time ' + new_state] = convertISODate(new Date());
+  //commit state change and timestamp to spreadsheet
+  this.worksheet.update(rowIndex, order);
 }

@@ -71,7 +71,8 @@ function createLabelFile(orderDetails, customerName, totalMeals, totalSoups) {
  * Create label from Sheet data
  */
 function createLabelFileFromSheet(orderDetails) {
-  var editableLabelDoc = newLabelTemplate(orderDetails['Payment ID']);
+  //As Order Number and Last name should be globally unique, this should make it easy to find in the Drive folder
+  var editableLabelDoc = newLabelTemplate("Order " + orderDetails['Order Number'] + ": " + orderDetails['Last Name']);
   var body = editableLabelDoc.getBody();
   var text = formatLabelFromSheet(orderDetails);
   for (var line in text) {

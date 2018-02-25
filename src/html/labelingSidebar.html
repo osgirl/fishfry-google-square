@@ -18,7 +18,8 @@
 <div class="reprintDiv">
   <fieldset>
     <legend>Reprint Labels:</legend>
-    <input type="text" name="reprint" id="OrderNumber"/>
+    <i>Note: reprinting labels will not change the order's state</i><br/>
+    <input type="number" min="0" max="9999" name="reprint" id="OrderNumber" placeholder="e.g. 2051"/>
     <input type="button" name="reprint" value="Reprint" onclick="btnPress();"/>
     <!--upon submit, clear field -->
   </fieldset>
