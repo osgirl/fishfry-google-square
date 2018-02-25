@@ -44,29 +44,11 @@ Worksheet.prototype.upsertTransaction = function (proposedOrder) {
     // the transaction hasn't been inserted yet; let's just insert it
     this.worksheet.append(proposedOrder);
 
-    //set formula for wait time in "Current Wait Time" column for the row you just inserted
-    if (proposedOrder['Order State'] === "Present") {
+    //set formula for wait time columns for the row you just inserted
+    if (proposedOrder['Order State'] == "Present") {
       // fetch rowIndex again because it should be in spreadsheet now
       rowIndex = this.searchForTransaction('Payment ID', proposedOrder['Payment ID']);
-
-      //TODO: all this logic should get put into a common method for re use when an online order is moved into present state
-      // find the column letters that represents "current wait time", "order state", "time present"      
-      var curWaitTimeCell = this.worksheet.getColumnLetter("Current Wait Time") + rowIndex;
-      var orderStateCell  = this.worksheet.getColumnLetter("Order State") + rowIndex;
-      var timePresentCell = this.worksheet.getColumnLetter("Time Present") + rowIndex;
-      
-      var curWaitTimeFormula = "IF(OR("+orderStateCell+"=\"Present\","+
-                                        orderStateCell+"=\"Labeled\","+
-                                        orderStateCell+"=\"Ready\"),NOW()-"+timePresentCell+",\"\")";
-      
-      this.worksheet.worksheet.getRange(curWaitTimeCell).setFormula(curWaitTimeFormula); 
-
-      var finalWaitTimeCell = this.worksheet.getColumnLetter("Final Wait Time") + rowIndex;
-      var timeClosedCell    = this.worksheet.getColumnLetter("Time Closed") + rowIndex;
-      
-      var finalWaitTimeFormula = "IF("+orderStateCell+"=\"Closed\","+timeClosedCell+"-"+timePresentCell+",\"\")";
-      
-      this.worksheet.worksheet.getRange(finalWaitTimeCell).setFormula(finalWaitTimeFormula); 
+      this.updateWaitTimeFormulas(rowIndex);
     }
   }
   else{
@@ -77,6 +59,26 @@ Worksheet.prototype.upsertTransaction = function (proposedOrder) {
 
     //TODO: determine if refund, then delete row from table
   }
+}
+
+Worksheet.prototype.updateWaitTimeFormulas = function (rowIndex) {
+  // find the column letters that represents "current wait time", "order state", "time present"
+  var curWaitTimeCell = this.worksheet.getColumnLetter("Current Wait Time") + rowIndex;
+  var orderStateCell  = this.worksheet.getColumnLetter("Order State") + rowIndex;
+  var timePresentCell = this.worksheet.getColumnLetter("Time Present") + rowIndex;
+
+  var curWaitTimeFormula = "IF(OR("+orderStateCell+"=\"Present\","+
+                                    orderStateCell+"=\"Labeled\","+
+                                    orderStateCell+"=\"Ready\"),NOW()-"+timePresentCell+",\"\")";
+
+  this.worksheet.worksheet.getRange(curWaitTimeCell).setFormula(curWaitTimeFormula).setNumberFormat("hh:mmam");
+
+  var finalWaitTimeCell = this.worksheet.getColumnLetter("Final Wait Time") + rowIndex;
+  var timeClosedCell    = this.worksheet.getColumnLetter("Time Closed") + rowIndex;
+
+  var finalWaitTimeFormula = "IF("+orderStateCell+"=\"Closed\","+timeClosedCell+"-"+timePresentCell+",\"\")";
+
+  this.worksheet.worksheet.getRange(finalWaitTimeCell).setFormula(finalWaitTimeFormula).setNumberFormat("hh:mmam");
 }
 
 Worksheet.prototype.reprintLabel = function (orderNumber) {
@@ -90,8 +92,7 @@ Worksheet.prototype.printLabel = function(orderNumber, advanceState) {
 
   var rowIndex = this.searchForTransaction('Order Number', parseInt(orderNumber));
   if (rowIndex == -1) {
-    Logger.log("Unable to locate Order Number: " + orderNumber);
-    return;
+    throw "Unable to locate Order Number: " + orderNumber;
   }
 
   var order = this.worksheet.getRowAsObject(rowIndex);
@@ -102,37 +103,44 @@ Worksheet.prototype.printLabel = function(orderNumber, advanceState) {
     this.worksheet.update(rowIndex, order)
   }
 
+  //TODO: catch and raise exception
   if (printLabelFromFile(order['Label Doc Link']) !== true) {
-    Logger.log('Print was unsuccessful for order: ' + orderNumber);
-    return;
+    throw 'Print was unsuccessful for order: ' + orderNumber;
   }
   if (advanceState) {
     this.advanceState(orderNumber);
   }
 }
 
-Worksheet.prototype.advanceState = function(orderNumber) {
+Worksheet.prototype.validateAndAdvanceState = function(orderNumber, fromState) {
   var rowIndex = this.searchForTransaction('Order Number', parseInt(orderNumber));
   if (rowIndex == -1) {
-    Logger.log("Unable to locate Order Number: " + orderNumber);
-    return;
+    throw "Unable to locate Order Number: " + orderNumber;
+  }
+  if (this.order_states.indexOf(fromState) == -1){
+    throw "State '"+fromState+" not found in state machine!";
   }
 
   var order = this.worksheet.getRowAsObject(rowIndex);
-  
+
   // locate current state in state machine
   var current_state = order['Order State'];
   var stateIndex = this.order_states.indexOf(current_state);
+
   if (stateIndex == this.order_states.length - 1) {
     throw "Order: " + orderNumber + " is already at the end of the State Machine!";
   }
 
   // increment state
   var new_state = this.order_states[stateIndex + 1];
+  var desired_new_state = this.order_states.indexOf(fromState) + 1;
+  if (new_state != this.order_states[desired_new_state]){
+    throw "Order " + orderNumber + " cannot transition to " + this.order_states[desired_new_state] + ' from ' + current_state;
+  }
 
   // update state in object
   order['Order State'] = new_state;
-  
+
   // test to make sure field is in spreadsheet
   if (!order.hasOwnProperty('Time ' + new_state)) {
     throw 'State: ' + new_state + ' is not a column in the spreadsheet .. but probably should be?';
@@ -141,4 +149,8 @@ Worksheet.prototype.advanceState = function(orderNumber) {
   order['Time ' + new_state] = convertISODate(new Date());
   //commit state change and timestamp to spreadsheet
   this.worksheet.update(rowIndex, order);
+
+  //TODO: set format for cell to be .setNumberFormat("hh:mmam");
+
+  return rowIndex;
 }
