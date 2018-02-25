@@ -1,20 +1,23 @@
 function Worksheet(spreadsheet_id, worksheet_name) {
+  var spreadsheet_id = ScriptProperties.getProperty("ssId");
+  if (spreadsheet_id === null || spreadsheet_id == undefined) {
     spreadsheet_id = '1NbNqn87RH-T9CoScqKejJlSxOo_CW4VMUnDKzgcE8TU';
-    worksheet_name = "Current Event Transaction Log";
+  }
+  worksheet_name = "Current Event Transaction Log";
 
-    // https://developers.google.com/apps-script/reference/spreadsheet/spreadsheet-app#openbyidid
-    // The code below opens a spreadsheet using its ID and logs the name for it.
-    // Note that the spreadsheet is NOT physically opened on the client side.
-    // It is opened on the server only (for modification by the script).
-    this.spreadsheet = new ManagedSpreadsheet(spreadsheet_id);
-    this.worksheet = this.spreadsheet.sheet(worksheet_name);
-    this.order_states = [
-      'Paid Online',
-      'Present',
-      'Labeled',
-      'Ready',
-      'Closed'
-    ];
+  // https://developers.google.com/apps-script/reference/spreadsheet/spreadsheet-app#openbyidid
+  // The code below opens a spreadsheet using its ID and logs the name for it.
+  // Note that the spreadsheet is NOT physically opened on the client side.
+  // It is opened on the server only (for modification by the script).
+  this.spreadsheet = new ManagedSpreadsheet(spreadsheet_id);
+  this.worksheet = this.spreadsheet.sheet(worksheet_name);
+  this.order_states = [
+    'Paid Online',
+    'Present',
+    'Labeled',
+    'Ready',
+    'Closed'
+  ];
 }
 
 /**
@@ -68,8 +71,7 @@ Worksheet.prototype.upsertTransaction = function (proposedOrder) {
       
       this.worksheet.worksheet.getRange(finalWaitTimeCell).setFormula(finalWaitTimeFormula); 
     }
-  }
-  else{
+  } else {
     // the transaction has already been inserted; we need to update it
     var existingOrder = this.worksheet.getRowAsObject(rowIndex);  
     //we need to determine the relevant delta between new and old
@@ -82,8 +84,8 @@ Worksheet.prototype.upsertTransaction = function (proposedOrder) {
 Worksheet.prototype.printLabel = function(orderNumber) {
   var rowIndex = this.searchForTransaction('Order Number', parseInt(orderNumber));
   if (rowIndex == -1) {
-    Logger.log("Unable to locate Order Number: " + orderNumber);
-    return;
+    Browser.msgBox("Unable to locate Order Number: " + orderNumber);
+    return false;
   }
 
   // retrive filename from row
@@ -96,40 +98,50 @@ Worksheet.prototype.printLabel = function(orderNumber) {
   }
 
   if (printLabelFromFile(fileUrl) !== true) {
-    Logger.log('Print was unsuccessful for order: ' + orderNumber);
-    return;
+    Browser.msgBox('Print was unsuccessful for order: ' + orderNumber);
+    return false;
   }
-  this.advanceState(orderNumber);
+  return this.setState(orderNumber, 'Labeled');
+}
+
+Worksheet.prototype.setState = function(orderNumber, newState) {
+  var column = 'Order State';
+  var rowIndex = this.searchForTransaction('Order Number', parseInt(orderNumber));
+  if (rowIndex == -1) {
+    Browser.msgBox("Unable to locate Order Number: " + orderNumber);
+    return false;
+  }
+
+  // update state
+  var orderStateCell  = this.worksheet.getColumnLetter(column) + rowIndex;
+  this.worksheet.worksheet.getRange(orderStateCell).setValue(newState);
+
+  // update state time
+  var timeCell = this.worksheet.getColumnLetter('Time ' + newState);
+  if (timeCell !== "") {
+    this.worksheet.worksheet.getRange(timeCell+rowIndex).setValue(convertISODate(new Date()));
+    //Logger.log('State: ' + newState + ' is not a column in the spreadsheet .. but probably should be?')
+  }
+  return newState;
 }
 
 Worksheet.prototype.advanceState = function(orderNumber) {
   var column = 'Order State';
   var rowIndex = this.searchForTransaction('Order Number', parseInt(orderNumber));
   if (rowIndex == -1) {
-    Logger.log("Unable to locate Order Number: " + orderNumber);
+    Browser.msgBox("Unable to locate Order Number: " + orderNumber);
     return;
   }
 
   // locate existing value
   var orderStateCell  = this.worksheet.getColumnLetter(column) + rowIndex;
-  var current_state = this.worksheet.worksheet.getRange(orderStateCell).getValue();
-  var stateIndex = this.order_states.indexOf(current_state);
+  var currentState = this.worksheet.worksheet.getRange(orderStateCell).getValue();
+  var stateIndex = this.order_states.indexOf(currentState);
   if (stateIndex == this.order_states.length - 1) {
-    Logger.log("Order: " + orderNumber + " is already at the end of the State Machine!");
+    Browser.msgBox("Order: " + orderNumber + " is already at the end of the State Machine!");
     return;
   }
 
   // increment state
-  var new_state = this.order_states[stateIndex + 1];
-
-  // update state
-  this.worksheet.worksheet.getRange(orderStateCell).setValue(new_state);
-
-  // update state time
-  var timeCell = this.worksheet.getColumnLetter('Time ' + new_state);
-  if (timeCell == "") {
-    Logger.log('State: ' + new_state + ' is not a column in the spreadsheet .. but probably should be?')
-    return;
-  }
-  this.worksheet.worksheet.getRange(timeCell+rowIndex).setValue(convertISODate(new Date()));
+  return setState(orderNumber, this.order_states[stateIndex + 1]);
 }

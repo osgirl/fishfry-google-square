@@ -19,7 +19,9 @@
   <fieldset>
     <legend>Reprint Labels:</legend>
     <input type="text" name="reprint" id="OrderNumber"/>
-    <input type="button" name="reprint" value="Reprint" onclick="btnPress();"/>
+    <input type="button" name="reprint" value="Print" onclick="btnPrint();"/>
+    <input type="button" name="reprint" value="Ready" onclick="btnPress('Ready');"/>
+    <input type="button" name="reprint" value="Close" onclick="btnPress('Closed');"/>
     <!--upon submit, clear field -->
   </fieldset>
 </div>
@@ -34,13 +36,22 @@
 //    $( "fieldset" ).controlgroup();
 
   } );
-  var btnPress = function() {
+  var btnPrint = function() {
     var order_id = document.getElementById('OrderNumber').value;
     if (order_id === null || order_id === undefined) {
       // invalid order number?
       return;
     }
-    //TODO: need callback from server to confirm correct order_id to user ... it fails silently now
+
     google.script.run.printLabel(order_id);
+  };
+  var btnPress = function(newState) {
+    var order_id = document.getElementById('OrderNumber').value;
+    if (order_id === null || order_id === undefined) {
+      // invalid order number?
+      return;
+    }
+
+    google.script.run.setState(order_id, newState);
   };
 </script>
