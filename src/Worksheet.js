@@ -47,29 +47,11 @@ Worksheet.prototype.upsertTransaction = function (proposedOrder) {
     // the transaction hasn't been inserted yet; let's just insert it
     this.worksheet.append(proposedOrder);
 
-    //set formula for wait time in "Current Wait Time" column for the row you just inserted
-    if (proposedOrder['Order State'] === "Present") {
+    //set formula for wait time columns for the row you just inserted
+    if (proposedOrder['Order State'] == "Present") {
       // fetch rowIndex again because it should be in spreadsheet now
       rowIndex = this.searchForTransaction('Payment ID', proposedOrder['Payment ID']);
-
-      //TODO: all this logic should get put into a common method for re use when an online order is moved into present state
-      // find the column letters that represents "current wait time", "order state", "time present"      
-      var curWaitTimeCell = this.worksheet.getColumnLetter("Current Wait Time") + rowIndex;
-      var orderStateCell  = this.worksheet.getColumnLetter("Order State") + rowIndex;
-      var timePresentCell = this.worksheet.getColumnLetter("Time Present") + rowIndex;
-      
-      var curWaitTimeFormula = "IF(OR("+orderStateCell+"=\"Present\","+
-                                        orderStateCell+"=\"Labeled\","+
-                                        orderStateCell+"=\"Ready\"),NOW()-"+timePresentCell+",\"\")";
-      
-      this.worksheet.worksheet.getRange(curWaitTimeCell).setFormula(curWaitTimeFormula); 
-
-      var finalWaitTimeCell = this.worksheet.getColumnLetter("Final Wait Time") + rowIndex;
-      var timeClosedCell    = this.worksheet.getColumnLetter("Time Closed") + rowIndex;
-      
-      var finalWaitTimeFormula = "IF("+orderStateCell+"=\"Closed\","+timeClosedCell+"-"+timePresentCell+",\"\")";
-      
-      this.worksheet.worksheet.getRange(finalWaitTimeCell).setFormula(finalWaitTimeFormula); 
+      this.updateWaitTimeFormulas(rowIndex);
     }
   } else {
     // the transaction has already been inserted; we need to update it
@@ -81,27 +63,57 @@ Worksheet.prototype.upsertTransaction = function (proposedOrder) {
   }
 }
 
-Worksheet.prototype.printLabel = function(orderNumber) {
+Worksheet.prototype.updateWaitTimeFormulas = function (rowIndex) {
+  // find the column letters that represents "current wait time", "order state", "time present"
+  var curWaitTimeCell = this.worksheet.getColumnLetter("Current Wait Time") + rowIndex;
+  var orderStateCell  = this.worksheet.getColumnLetter("Order State") + rowIndex;
+  var timePresentCell = this.worksheet.getColumnLetter("Time Present") + rowIndex;
+
+  var curWaitTimeFormula = "IF(OR("+orderStateCell+"=\"Present\","+
+                                    orderStateCell+"=\"Labeled\","+
+                                    orderStateCell+"=\"Ready\"),NOW()-"+timePresentCell+",\"\")";
+
+  this.worksheet.worksheet.getRange(curWaitTimeCell).setFormula(curWaitTimeFormula).setNumberFormat("hh:mmam");
+
+  var finalWaitTimeCell = this.worksheet.getColumnLetter("Final Wait Time") + rowIndex;
+  var timeClosedCell    = this.worksheet.getColumnLetter("Time Closed") + rowIndex;
+
+  var finalWaitTimeFormula = "IF("+orderStateCell+"=\"Closed\","+timeClosedCell+"-"+timePresentCell+",\"\")";
+
+  this.worksheet.worksheet.getRange(finalWaitTimeCell).setFormula(finalWaitTimeFormula).setNumberFormat("hh:mmam");
+}
+
+Worksheet.prototype.reprintLabel = function (orderNumber) {
+  this.printLabel(orderNumber, false);
+}
+
+Worksheet.prototype.printLabel = function(orderNumber, advanceState) {
+  if (typeof(advanceState)==='undefined'){
+    advanceState = true;
+  }
+
   var rowIndex = this.searchForTransaction('Order Number', parseInt(orderNumber));
   if (rowIndex == -1) {
     Browser.msgBox("Unable to locate Order Number: " + orderNumber);
     return false;
   }
 
-  // retrive filename from row
-  var labelCell = this.worksheet.getColumnLetter('Label Doc Link') + rowIndex;
-  var fileUrl = this.worksheet.worksheet.getRange(labelCell).getValue();;
-  if (fileUrl == "") {
+  var order = this.worksheet.getRowAsObject(rowIndex);
+  // retrieve filename from row
+  if (order['Label Doc Link'] == "") {
     // the label was not generated yet, so attempt now
-    fileUrl = createLabelFileFromSheet(this.worksheet.getRowAsObject(rowIndex));
-    this.worksheet.worksheet.getRange(labelCell).setValue(fileUrl);
+    order['Label Doc Link'] = createLabelFileFromSheet(order);
+    this.worksheet.update(rowIndex, order)
   }
 
-  if (printLabelFromFile(fileUrl) !== true) {
+  //TODO: catch and raise exception
+  if (printLabelFromFile(order['Label Doc Link']) !== true) {
     Browser.msgBox('Print was unsuccessful for order: ' + orderNumber);
     return false;
   }
-  return this.setState(orderNumber, 'Labeled');
+  if (advanceState) {
+    return this.setState(orderNumber, 'Labeled');
+  }
 }
 
 Worksheet.prototype.setState = function(orderNumber, newState) {
@@ -125,23 +137,48 @@ Worksheet.prototype.setState = function(orderNumber, newState) {
   return newState;
 }
 
-Worksheet.prototype.advanceState = function(orderNumber) {
-  var column = 'Order State';
+Worksheet.prototype.validateAndAdvanceState = function(orderNumber, fromState) {
   var rowIndex = this.searchForTransaction('Order Number', parseInt(orderNumber));
   if (rowIndex == -1) {
     Browser.msgBox("Unable to locate Order Number: " + orderNumber);
     return;
   }
-
-  // locate existing value
-  var orderStateCell  = this.worksheet.getColumnLetter(column) + rowIndex;
-  var currentState = this.worksheet.worksheet.getRange(orderStateCell).getValue();
-  var stateIndex = this.order_states.indexOf(currentState);
-  if (stateIndex == this.order_states.length - 1) {
-    Browser.msgBox("Order: " + orderNumber + " is already at the end of the State Machine!");
+  if (this.order_states.indexOf(fromState) == -1){
+    Browser.msgBox("State '"+fromState+" not found in state machine!");
     return;
   }
 
+  var order = this.worksheet.getRowAsObject(rowIndex);
+
+  // locate current state in state machine
+  var current_state = order['Order State'];
+  var stateIndex = this.order_states.indexOf(current_state);
+
+  if (stateIndex == this.order_states.length - 1) {
+    throw "Order: " + orderNumber + " is already at the end of the State Machine!";
+  }
+
   // increment state
-  return setState(orderNumber, this.order_states[stateIndex + 1]);
+  var new_state = this.order_states[stateIndex + 1];
+  var desired_new_state = this.order_states.indexOf(fromState) + 1;
+  if (new_state != this.order_states[desired_new_state]){
+    throw "Order " + orderNumber + " cannot transition to " + this.order_states[desired_new_state] + ' from ' + current_state;
+  }
+
+  // update state in object
+  order['Order State'] = new_state;
+
+  // test to make sure field is in spreadsheet
+  if (!order.hasOwnProperty('Time ' + new_state)) {
+    Logger.log('State: ' + new_state + ' is not a column in the spreadsheet .. but probably should be?');
+  } else {
+    // update state time in object only if it's a valid column
+    order['Time ' + new_state] = convertISODate(new Date());
+  }
+  //commit state change and timestamp to spreadsheet
+  this.worksheet.update(rowIndex, order);
+
+  //TODO: set format for cell to be .setNumberFormat("hh:mmam");
+
+  return rowIndex;
 }

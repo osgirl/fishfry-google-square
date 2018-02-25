@@ -34,52 +34,22 @@
 <div style='top:80px;left:93px;width:14px;height:40px;background:#9f4a6c;-webkit-transform:rotate(330deg) translate(0,-60px);transform:rotate(330deg) translate(0,-60px);border-radius:10px;position:absolute;'></div>
 </div>
 <div class="root">
-<!--
-<div class="widget">
-  <fieldset>
-    <legend>Filter Orders: </legend>
-    <label for="radio-1">All</label>
-    <input type="radio" name="radio-1" id="radio-1" checked="true">
-    <label for="radio-1">Odd</label>
-    <input type="radio" name="radio-1" id="radio-2">
-    <label for="radio-2">Even</label>
-    <input type="radio" name="radio-1" id="radio-3">
-  </fieldset>
-</div>
--->
-<div class="orderListDiv">
-  <ul id="orderList"></ul>
-</div>
-<div class="printDiv">
-  <fieldset>
-    <legend>Print Labels:</legend>
-    <input type="number" min="0" max="9999" name="print" id="PrintOrderNumber" placeholder="e.g. 2047"/>
-    <input type="button" name="print" value="Print" onclick="printLabel();"/>
-    <!--upon submit, clear field -->
-  </fieldset>
-</div>
-
-<div class="reprintDiv">
-  <fieldset>
-    <legend>Reprint Labels:</legend>
-    <i>Note: reprinting labels will not change the order's state</i><br/>
-    <input type="number" min="0" max="9999" name="reprint" id="ReprintOrderNumber" placeholder="e.g. 2051"/>
-    <input type="button" name="reprint" value="Reprint" onclick="reprintLabel();"/>
-    <!--upon submit, clear field -->
-  </fieldset>
-</div>
+  <!--
+  <div class="orderListDiv">
+    <ul id="orderList"></ul>
+  </div>
+  -->
+  <div class="orderDiv">
+    <fieldset>
+      <legend>Mark Order as <?=futureState?></legend>
+      <input type="number" min="0" max="9999" name="order" id="OrderNumber" placeholder="e.g. 2047"/>
+      <input type="button" name="order" value="Mark <?=futureState?>" onclick="markOrder();"/>
+    </fieldset>
+  </div>
 </div>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
 <script>
-//TODO: onchange of radio-1 - apply filter on list
-//TODO: write function that will call GAS to invoke cloud print API, change order state, remove from list
-  $( function() {
-//    $( "input" ).checkboxradio();
-//    $( "fieldset" ).controlgroup();
-
-  } );
-
   function validateOrderNumber(orderNumber) {
     if (orderNumber === null || orderNumber === undefined || orderNumber == "") {
       alert("Order Number not specified!");
@@ -88,45 +58,30 @@
     else return true;
   }
 
-  var printLabel = function() {
+  var markOrder = function() {
     $("#spinner").show();
     $("#root").fadeTo(0,0.5);
-    var order = document.getElementById('PrintOrderNumber');
+    var order = document.getElementById('OrderNumber');
     if (!validateOrderNumber(order.value)){
       $("#spinner").hide();
       return;
     }
 
     //TODO: need callback from server to confirm correct order_id to user ... it fails silently now
-    google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onFailure).printLabel(order.value);
-    $(":input").prop("disabled", true);
-  };
-
-  var reprintLabel = function() {
-    $("#spinner").show();
-    $("#root").fadeTo(0,0.5);
-    var order = document.getElementById('ReprintOrderNumber');
-    if (!validateOrderNumber(order.value)){
-      $("#spinner").hide();
-      return;
-    }
-
-    //TODO: need callback from server to confirm correct order_id to user ... it fails silently now
-    google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onFailure).reprintLabel(order.value);
+    google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onFailure).mark<?!=futureState?>(order.value);
     $(":input").prop("disabled", true);
   };
 
   function onSuccess(result){
     $("#spinner").hide();
-    document.getElementById('PrintOrderNumber').value = '';
-    document.getElementById('ReprintOrderNumber').value = '';
+    document.getElementById('OrderNumber').value = '';
     $(":input").prop("disabled", false);
+
   }
   function onFailure(e){
     $("#spinner").hide();
     alert(e);
-    document.getElementById('PrintOrderNumber').value = '';
-    document.getElementById('ReprintOrderNumber').value = '';
+    document.getElementById('OrderNumber').value = '';
     $(":input").prop("disabled", false);
   }
 

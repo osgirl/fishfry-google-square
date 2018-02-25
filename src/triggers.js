@@ -2,6 +2,7 @@ function onOpen() {
   //TODO: Check for SQUARE_ACCESS_TOKEN in Properties; throw exception / warning if that is not present
   SpreadsheetApp.getUi()
       .createMenu('Station Menu')
+      .addItem('Cashier Station', 'showCashierSidebar')
       .addItem('Labeling Station', 'showLabelingSidebar')
       .addItem('Ready Station', 'showReadySidebar')
       .addItem('Closing Station', 'showClosingSidebar')
@@ -75,6 +76,15 @@ function simulateNewOrder() {
   Browser.msgBox("Script successfully simulated an Order.");
 }
 
+function showCashierSidebar() {
+  var html = HtmlService.createTemplateFromFile('src/html/sidebarTemplate');
+  html.futureState = "Present";
+  var htmlOutput = html.evaluate()
+                       .setTitle('Cashier sidebar')
+                       .setWidth(300);
+  SpreadsheetApp.getUi().showSidebar(htmlOutput);
+}
+
 function showLabelingSidebar() {
   var html = HtmlService.createHtmlOutputFromFile('src/html/labelingSidebar')
                         .setTitle('Labeling sidebar')
@@ -83,17 +93,21 @@ function showLabelingSidebar() {
 }
 
 function showReadySidebar() {
-  var html = HtmlService.createHtmlOutputFromFile('src/html/readySidebar')
-                        .setTitle('Ready sidebar')
-                        .setWidth(300);
-  SpreadsheetApp.getUi().showSidebar(html);
+  var html = HtmlService.createTemplateFromFile('src/html/sidebarTemplate');
+  html.futureState = "Ready";
+  var htmlOutput = html.evaluate()
+                       .setTitle('Ready sidebar')
+                       .setWidth(300);
+  SpreadsheetApp.getUi().showSidebar(htmlOutput);
 }
 
 function showClosingSidebar() {
-  var html = HtmlService.createHtmlOutputFromFile('src/html/closingSidebar')
-                        .setTitle('Closing sidebar')
-                        .setWidth(300);
-  SpreadsheetApp.getUi().showSidebar(html);
+  var html = HtmlService.createTemplateFromFile('src/html/sidebarTemplate');
+  html.futureState = "Closed";
+  var htmlOutput = html.evaluate()
+                       .setTitle('Closing sidebar')
+                       .setWidth(300);
+  SpreadsheetApp.getUi().showSidebar(htmlOutput);
 }
 
 /**
@@ -119,14 +133,33 @@ function notifySidebars() {
 
 function printLabel(order_id) {
   var worksheet = new Worksheet();
+  worksheet.validateAndAdvanceState(order_id,'Present');
   if (worksheet.printLabel(order_id) === 'Labeled') {
     Browser.msgBox("Print successful.");
   }
 }
 
-function setState(order_id, state) {
+function reprintLabel(order_id) {
   var worksheet = new Worksheet();
-  var state = worksheet.setState(order_id, state);
+  // we do not validate nor check state for reprinting here
+  //TODO: perhaps we should require minimum >= present?
+  worksheet.reprintLabel(order_id);
+}
+
+function markPresent(order_id) {
+  var worksheet = new Worksheet();
+  var rowIndex = worksheet.validateAndAdvanceState(order_id,'Paid Online');
+  worksheet.updateWaitTimeFormulas(rowIndex);
+}
+
+function markReady(order_id) {
+  var worksheet = new Worksheet();
+  worksheet.validateAndAdvanceState(order_id,'Labeled');
+}
+
+function markClosed(order_id) {
+  var worksheet = new Worksheet();
+  worksheet.validateAndAdvanceState(order_id,'Ready');
 }
 
 function advanceState(order_id) {
