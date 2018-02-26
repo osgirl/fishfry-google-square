@@ -13,30 +13,60 @@ function newLabelTemplate(filename) {
   return editableLabelDoc;
 }
 
-function formatLabelFromSquare(orderDetails, customerName, totalMeals, totalSoups) {
-  var body = [];
+function pad(pad, str, padLeft) {
+  if (typeof str === 'undefined')
+    return pad;
+  if (padLeft) {
+    return (pad + str).slice(-pad.length);
+  } else {
+    return (str + pad).substring(0, pad.length);
+  }
+}
+
+function formatLabelFromSquare(body, orderNumber, orderDetails, txnMetadata, customerName, totalMeals, totalSoups) {
   var mealCount = 1;
+  var font = 'Courier New';
   orderDetails.itemizations.forEach( function(item) {
-    // if this is a soup, don't print a separate label
-    //TODO: what if there are only soups?
-    // if totalMeals == 0 && totalSoups > 0
-    if (item.name == "Clam Chowder Soup")
-      return;
+    // 26 characters at 14pt
+    var line1 = body
+      .appendParagraph(pad('    ', orderNumber.toString(), true)
+        + '              '
+        + pad('  ', mealCount.toString(), true)
+        + " of "
+        + pad('  ', totalMeals.toString(), true))
+      .setFontFamily(font)
+      .setSpacingAfter(0)
+      .setBold(true)
+      .setFontSize(14)
+      .setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+    // 37 characters at 10pt
+    var line2 = body
+      .appendParagraph(customerName)
+      .setFontFamily(font)
+      .setBold(false)
+      .setFontSize(10)
+      .setAlignment(DocumentApp.HorizontalAlignment.RIGHT);
+    // 33 characters at 11pt
+    var line3 = body
+      .appendParagraph(item.item_variation_name
+        + "   "
+        + pad('    ', item.modifiers[0].name, true)
+        + "   "
+        + pad('  ', totalSoups.toString(), true)
+        + " Soup")
+      .setFontFamily(font)
+      .setBold(true)
+      .setFontSize(11)
+      .setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+    // 37 characters at 10pt
+    var line4 = body
+      .appendParagraph(txnMetadata.note)
+      .setFontFamily(font)
+      .setBold(false)
+      .setFontSize(10)
+      .setAlignment(DocumentApp.HorizontalAlignment.LEFT);
 
-    for (var c = 1; c <= item.quantity; c++){
-      var labelString = customerName + "\t" + "Meal " + mealCount + " of " + totalMeals + "\n";
-
-      if (item.item_variation_name != "")
-        labelString += item.name + " (" + item.item_variation_name + ")\n";
-      else
-        labelString += item.name + "\n"
-
-      labelString += "Side: " + item.modifiers[0].name + "\n";
-      if (totalSoups > 0)
-        labelString += totalSoups + " soups in order";
-
-      body.push(labelString);
-    }
+    body.appendPageBreak();
     mealCount++;
   });
   // Last Name       Meal X of Y
@@ -44,8 +74,8 @@ function formatLabelFromSquare(orderDetails, customerName, totalMeals, totalSoup
   // Side: [Fries|Red Potato]
   // Z Soups in Order
 
-  // if another meal, new "page"
-  return body;
+  // remove empty first line
+  return body;//.deleteText(0,1);
 }
 
 function formatLabelFromSheet(orderDetails) {
@@ -53,16 +83,12 @@ function formatLabelFromSheet(orderDetails) {
   return ['test body when not generated from squqre'];
 }
 
-function createLabelFile(orderDetails, customerName, totalMeals, totalSoups) {
+function createLabelFile(orderNumber, orderDetails, txnMetadata, customerName, totalMeals, totalSoups) {
   var editableLabelDoc = newLabelTemplate(orderDetails.id);
   //for each meal, enter into label
 
   var body = editableLabelDoc.getBody();
-  var text = formatLabelFromSquare(orderDetails, customerName, totalMeals, totalSoups);
-  for (var line in text) {
-    body.appendParagraph(text[line]);
-    body.appendPageBreak();
-  }
+  formatLabelFromSquare(body, orderNumber, orderDetails, txnMetadata, customerName, totalMeals, totalSoups);
 
   return editableLabelDoc.getUrl();
 

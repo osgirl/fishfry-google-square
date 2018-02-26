@@ -64,6 +64,10 @@ Worksheet.prototype.upsertTransaction = function (proposedOrder) {
 }
 
 Worksheet.prototype.updateWaitTimeFormulas = function (rowIndex) {
+  if (rowIndex < 0) {
+    Logger.log('Invalid rowIndex: ' + rowIndex);
+    return;
+  }
   // find the column letters that represents "current wait time", "order state", "time present"
   var curWaitTimeCell = this.worksheet.getColumnLetter("Current Wait Time") + rowIndex;
   var orderStateCell  = this.worksheet.getColumnLetter("Order State") + rowIndex;
@@ -141,11 +145,11 @@ Worksheet.prototype.validateAndAdvanceState = function(orderNumber, fromState) {
   var rowIndex = this.searchForTransaction('Order Number', parseInt(orderNumber));
   if (rowIndex == -1) {
     Browser.msgBox("Unable to locate Order Number: " + orderNumber);
-    return;
+    return -1;
   }
   if (this.order_states.indexOf(fromState) == -1){
     Browser.msgBox("State '"+fromState+" not found in state machine!");
-    return;
+    return -1;
   }
 
   var order = this.worksheet.getRowAsObject(rowIndex);
@@ -155,14 +159,16 @@ Worksheet.prototype.validateAndAdvanceState = function(orderNumber, fromState) {
   var stateIndex = this.order_states.indexOf(current_state);
 
   if (stateIndex == this.order_states.length - 1) {
-    throw "Order: " + orderNumber + " is already at the end of the State Machine!";
+    Browser.msgBox("Order: " + orderNumber + " is already at the end of the State Machine!");
+    return -1;
   }
 
   // increment state
   var new_state = this.order_states[stateIndex + 1];
   var desired_new_state = this.order_states.indexOf(fromState) + 1;
   if (new_state != this.order_states[desired_new_state]){
-    throw "Order " + orderNumber + " cannot transition to " + this.order_states[desired_new_state] + ' from ' + current_state;
+    Browser.msgBox("Order " + orderNumber + " cannot transition to " + this.order_states[desired_new_state] + ' from ' + current_state);
+    return -1;
   }
 
   // update state in object
