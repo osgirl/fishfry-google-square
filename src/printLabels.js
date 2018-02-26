@@ -111,14 +111,15 @@ function createLabelFileFromSheet(orderDetails) {
 function printLabelFromFile(filename_url) {
   // verify filename exists and we have access to it
   var file = null;
+  var printer = null;
   try {
-    file = DriveApp.getFileById(DocumentApp.openByUrl(filename_url).getId());
+    file = DocumentApp.openByUrl(filename_url)
   } catch (e) {
     Logger.log(e);
     //TODO: why would it ever get to this state, and we should be returning 'false'
     return true;
   }
-  var printSuccessful = false;
+  var printSuccessful = printGoogleDocument(file.getId(), printer, file.getName());
 
   //TODO: replace 'true' with perform print
   if (true) {
@@ -126,4 +127,87 @@ function printLabelFromFile(filename_url) {
   }
 
   return printSuccessful;
+}
+
+
+//https://ctrlq.org/code/20061-google-cloud-print-with-apps-script
+function getCloudPrintService() {
+  //TODO: replace CLIENT_ID/SECRET
+  return OAuth2.createService('print')
+    .setAuthorizationBaseUrl('https://accounts.google.com/o/oauth2/auth')
+    .setTokenUrl('https://accounts.google.com/o/oauth2/token')
+    .setClientId('CLIENT_ID')
+    .setClientSecret('CLIENT_SECRET')
+    .setCallbackFunction('authCallback')
+    .setPropertyStore(PropertiesService.getUserProperties())
+    .setScope('https://www.googleapis.com/auth/cloudprint')
+    .setParam('login_hint', Session.getActiveUser().getEmail())
+    .setParam('access_type', 'offline')
+    .setParam('approval_prompt', 'force');
+}
+
+function authCallback(request) {
+  var isAuthorized = getCloudPrintService().handleCallback(request);
+  if (isAuthorized) {
+    return HtmlService.createHtmlOutput('You can now use Google Cloud Print from Apps Script.');
+  } else {
+    return HtmlService.createHtmlOutput('Cloud Print Error: Access Denied');
+  }
+}
+
+function getPrinterList() {
+  var response = UrlFetchApp.fetch('https://www.google.com/cloudprint/search', {
+    headers: {
+      Authorization: 'Bearer ' + getCloudPrintService().getAccessToken()
+    },
+    muteHttpExceptions: true
+  }).getContentText();
+
+  var printers = JSON.parse(response).printers;
+
+  for (var p in printers) {
+    Logger.log("%s %s %s", printers[p].id, printers[p].name, printers[p].description);
+  }
+}
+
+function printGoogleDocument(docID, printerID, docName) {
+  var ticket = {
+    version: "1.0",
+    print: {
+      color: {
+        type: "STANDARD_COLOR",
+        vendor_id: "Color"
+      },
+      duplex: {
+        type: "NO_DUPLEX"
+      }
+    }
+  };
+
+  var payload = {
+    "printerid" : printerID,
+    "title"     : docName,
+    "content"   : DriveApp.getFileById(docID).getBlob(),
+    "contentType": "google.kix",
+    "ticket"    : JSON.stringify(ticket)
+  };
+
+  var response = UrlFetchApp.fetch('https://www.google.com/cloudprint/submit', {
+    method: "POST",
+    payload: payload,
+    headers: {
+      Authorization: 'Bearer ' + getCloudPrintService().getAccessToken()
+    },
+    "muteHttpExceptions": true
+  });
+
+  response = JSON.parse(response);
+
+  if (response.success) {
+    Logger.log("%s", response.message);
+    return true;
+  } else {
+    Logger.log("Error Code: %s %s", response.errorCode, response.message);
+    return false;
+  }
 }
