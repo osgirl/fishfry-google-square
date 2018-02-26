@@ -149,7 +149,8 @@ ManagedWorksheet.prototype.processAppends = function() {
   this._lastRow = null;
 }
 
-// overwrites existing data, be sure to pass everything in
+// commented out because this only works if all columns hold VALUES, not a mixture of values & formulas.
+/* overwrites existing data, be sure to pass everything in
 ManagedWorksheet.prototype.update = function(rowIndex, data) {
   if(rowIndex == -1) {
     Logger.log("Asking to update a row with a negative index")
@@ -165,11 +166,12 @@ ManagedWorksheet.prototype.update = function(rowIndex, data) {
     this._cache[rowIndex - 1] = toAppend;
   } else {
     var range = this.worksheet.getRange(rowIndex, 1, 1, toAppend.length);
+    //TODO: range.setFormulas() as well
     range.setValues([toAppend]);
   }
   this._indices = null;
 }
-
+*/
 ManagedWorksheet.prototype.activate = function(data) {
   this.worksheet.activate();
 }
@@ -270,6 +272,7 @@ ManagedWorksheet.prototype.getRow = function(rowNumber) {
   if(this._cache)
     return this._cache[rowNumber - 1];
   
+  //TODO: merge with Range.getFormulas()
   var range = this.worksheet.getRange(rowNumber, 1, 1, this.getLastColumn());
   return range.getValues()[0];
 }
@@ -352,3 +355,9 @@ ManagedWorksheet.prototype.find = function(key, value) {
   var row = this.getRow(index);
   return this.rowToObject(row);
 }
+
+ManagedWorksheet.prototype.updateCell = function (rowIndex, columnName, val) {
+  var colLetter = this.getColumnLetter(columnName);
+  this.worksheet.getRange(colLetter + rowIndex).setValue(val);
+}
+  

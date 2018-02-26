@@ -68,19 +68,21 @@ Worksheet.prototype.updateWaitTimeFormulas = function (rowIndex) {
   var curWaitTimeCell = this.worksheet.getColumnLetter("Current Wait Time") + rowIndex;
   var orderStateCell  = this.worksheet.getColumnLetter("Order State") + rowIndex;
   var timePresentCell = this.worksheet.getColumnLetter("Time Present") + rowIndex;
+  
+  this.worksheet.worksheet.getRange(timePresentCell).setNumberFormat("h:mmam/pm");
 
   var curWaitTimeFormula = "IF(OR("+orderStateCell+"=\"Present\","+
                                     orderStateCell+"=\"Labeled\","+
                                     orderStateCell+"=\"Ready\"),NOW()-"+timePresentCell+",\"\")";
 
-  this.worksheet.worksheet.getRange(curWaitTimeCell).setFormula(curWaitTimeFormula).setNumberFormat("hh:mmam");
+  this.worksheet.worksheet.getRange(curWaitTimeCell).setFormula(curWaitTimeFormula).setNumberFormat("[m] \"minutes\"");
 
   var finalWaitTimeCell = this.worksheet.getColumnLetter("Final Wait Time") + rowIndex;
   var timeClosedCell    = this.worksheet.getColumnLetter("Time Closed") + rowIndex;
 
   var finalWaitTimeFormula = "IF("+orderStateCell+"=\"Closed\","+timeClosedCell+"-"+timePresentCell+",\"\")";
 
-  this.worksheet.worksheet.getRange(finalWaitTimeCell).setFormula(finalWaitTimeFormula).setNumberFormat("hh:mmam");
+  this.worksheet.worksheet.getRange(finalWaitTimeCell).setFormula(finalWaitTimeFormula).setNumberFormat("[m] \"minutes\"");
 }
 
 Worksheet.prototype.reprintLabel = function (orderNumber) {
@@ -99,11 +101,14 @@ Worksheet.prototype.printLabel = function(orderNumber, advanceState) {
   }
 
   var order = this.worksheet.getRowAsObject(rowIndex);
+  Logger.log(JSON.stringify(order));
+  
   // retrieve filename from row
   if (order['Label Doc Link'] == "") {
     // the label was not generated yet, so attempt now
     order['Label Doc Link'] = createLabelFileFromSheet(order);
-    this.worksheet.update(rowIndex, order)
+    // we need to update this cell directly as orm.update() will blow away formulas
+    this.worksheet.updateCell(rowIndex, 'Label Doc Link', order['Label Doc Link']);
   }
 
   //TODO: catch and raise exception
@@ -112,7 +117,7 @@ Worksheet.prototype.printLabel = function(orderNumber, advanceState) {
     return false;
   }
   if (advanceState) {
-    return this.setState(orderNumber, 'Labeled');
+    return this.validateAndAdvanceState(orderNumber, 'Present');
   }
 }
 
@@ -125,7 +130,7 @@ Worksheet.prototype.setState = function(orderNumber, newState) {
   }
 
   // update state
-  var orderStateCell  = this.worksheet.getColumnLetter(column) + rowIndex;
+  var orderStateCell = this.worksheet.getColumnLetter(column) + rowIndex;
   this.worksheet.worksheet.getRange(orderStateCell).setValue(newState);
 
   // update state time
@@ -176,9 +181,11 @@ Worksheet.prototype.validateAndAdvanceState = function(orderNumber, fromState) {
     order['Time ' + new_state] = convertISODate(new Date());
   }
   //commit state change and timestamp to spreadsheet
-  this.worksheet.update(rowIndex, order);
+  this.worksheet.updateCell(rowIndex, 'Order State', order['Order State']);
+  this.worksheet.updateCell(rowIndex, 'Time ' + new_state, order['Time ' + new_state]);
 
-  //TODO: set format for cell to be .setNumberFormat("hh:mmam");
-
+  var timeCell = this.worksheet.getColumnLetter("Time " + new_state) + rowIndex;
+  this.worksheet.worksheet.getRange(timeCell).setNumberFormat("h:mmam/pm");
+  
   return rowIndex;
 }

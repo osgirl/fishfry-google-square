@@ -133,7 +133,7 @@ function notifySidebars() {
 
 function printLabel(order_id) {
   var worksheet = new Worksheet();
-  worksheet.validateAndAdvanceState(order_id,'Present');
+  //worksheet.validateAndAdvanceState(order_id,'Present');
   if (worksheet.printLabel(order_id) === 'Labeled') {
     Browser.msgBox("Print successful.");
   }

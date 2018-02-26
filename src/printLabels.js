@@ -54,7 +54,7 @@ function formatLabelFromSheet(orderDetails) {
 }
 
 function createLabelFile(orderDetails, customerName, totalMeals, totalSoups) {
-  var editableLabelDoc = newLabelTemplate(orderDetails.id);
+  var editableLabelDoc = newLabelTemplate("Order " + orderDetails['Order Number'] + ": " + customerName);
   //for each meal, enter into label
 
   var body = editableLabelDoc.getBody();
