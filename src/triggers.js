@@ -133,10 +133,8 @@ function notifySidebars() {
 
 function printLabel(order_id) {
   var worksheet = new Worksheet();
-  if (worksheet.validateAndAdvanceState(order_id,'Present') === -1) {
-    return;
-  }
-  if (worksheet.printLabel(order_id) === 'Labeled') {
+  // the following call will print label & advance state
+  if (worksheet.printLabel(order_id)) {
     Browser.msgBox("Print successful.");
   }
 }

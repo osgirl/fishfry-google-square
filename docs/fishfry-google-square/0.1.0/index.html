@@ -166,13 +166,28 @@
 <li>Used to retrieve the Print template, create new document based on data from Sheet</li>
 </ul>
 </li>
+<li><a href="https://developers.google.com/apps-script/reference/lock/lock-service">LockService</a><ul>
+<li>Prevents concurrent access to sections of code.</li>
+<li>Used to retrive atomic human interpretable order number (i.e. auto-increment)</li>
 </ul>
-<h3>Source Code</h3><pre class="prettyprint source"><code>src
-├── doPost.js - webhook callback for Square
-├── fishfry.js - entry point for Google Sheets
-├── html - form templates
-├── orm.js - helper functions to manipulate the Google Sheet and Workbooks within
-└── printLabels.js - generate label from order</code></pre>
+</li>
+<li><a href="https://developers.google.com/apps-script/reference/utilities/utilities">Utilities</a><ul>
+<li>This service provides utilities for string encoding/decoding, date formatting, JSON manipulation, and other miscellaneous tasks.</li>
+<li>Used for date/time formatting</li>
+</ul>
+</li>
+</ul>
+<h3>Source Code</h3><pre class="prettyprint source"><code>└── src
+    ├── FormatOrder.js - used to take input from Square API and format it to insert into Google Sheets
+    ├── Worksheet.js - manipulation to the Worksheet Transactions
+    ├── doPost.js - webhook callback for Square
+    ├── html - form templates
+    ├── menuItems.js - objects for items customers may order, and what ingredients are contained within each order
+    ├── orm.js - helper functions to manipulate the Google Sheet and Workbooks within
+    ├── printLabels.js - generate label from an order, as well as send the label to the printer spool
+    ├── simulateSquare.js - testing helper to simulate data from Square
+    ├── squareAPI.js - simulate responses from Square's RESTful APIs (used in test only) 
+    └── triggers.js - JavaScript trigger functions (i.e. entry point for Google Sheets)</code></pre>
     </article>
   </section>
 
