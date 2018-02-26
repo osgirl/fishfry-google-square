@@ -53,8 +53,8 @@ function formatLabelFromSheet(orderDetails) {
   return ['test body when not generated from squqre'];
 }
 
-function createLabelFile(orderDetails, customerName, totalMeals, totalSoups) {
-  var editableLabelDoc = newLabelTemplate("Order " + orderDetails['Order Number'] + ": " + customerName);
+function createLabelFile(orderNumber, orderDetails, customerName, totalMeals, totalSoups) {
+  var editableLabelDoc = newLabelTemplate("Order " + orderNumber + ": " + customerName);
   //for each meal, enter into label
 
   var body = editableLabelDoc.getBody();

@@ -197,16 +197,17 @@ FormatOrder.prototype.ConvertSquareToSheet = function(txnMetadata, orderDetails,
   var ingredients = order.ingredientTotals();
   var mealCount = order.servingCount('MEAL');
   var soupCount = order.servingCount('SOUP');
+  var orderNumber = this.getOrderNumberAtomic();
 
   // format data for Sheet
   var result = {
-    "Order Number": this.getOrderNumberAtomic(),
+    "Order Number": orderNumber,
     "Payment ID": orderDetails.id,
     "Order Received Date/Time": convertISODate(new Date(orderDetails.created_at)),
     "Last Name": lastName, //TODO: timing issue around fetching this prematurely?
     "Expedite": "No",
     "Note on Order": txnMetadata.note,//TODO: not sure this is the correct field
-    "Label Doc Link": createLabelFile(orderDetails, lastName, mealCount, soupCount),
+    "Label Doc Link": createLabelFile(orderNumber, orderDetails, lastName, mealCount, soupCount),
     "Order Venue": (this.getStateFromOrigin(txnMetadata.origin) == "Present") ? "In Person" : "Online",
     "Order State": this.getStateFromOrigin(txnMetadata.origin),
     "Square Receipt Link": orderDetails.receipt_url,
@@ -245,7 +246,8 @@ FormatOrder.prototype.ConvertSquareToSheet = function(txnMetadata, orderDetails,
 function convertISODate(date){
 // TODO: why isn't seconds here?
   return Utilities.formatDate(date, "EST", "MM/dd/yyyy hh:mma");
-}</code></pre>
+}
+</code></pre>
   </article>
 </section>
 
