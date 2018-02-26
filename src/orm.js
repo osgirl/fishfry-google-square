@@ -360,4 +360,3 @@ ManagedWorksheet.prototype.updateCell = function (rowIndex, columnName, val) {
   var colLetter = this.getColumnLetter(columnName);
   this.worksheet.getRange(colLetter + rowIndex).setValue(val);
 }
-  

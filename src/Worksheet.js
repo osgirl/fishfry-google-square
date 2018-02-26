@@ -68,7 +68,7 @@ Worksheet.prototype.updateWaitTimeFormulas = function (rowIndex) {
   var curWaitTimeCell = this.worksheet.getColumnLetter("Current Wait Time") + rowIndex;
   var orderStateCell  = this.worksheet.getColumnLetter("Order State") + rowIndex;
   var timePresentCell = this.worksheet.getColumnLetter("Time Present") + rowIndex;
-  
+
   this.worksheet.worksheet.getRange(timePresentCell).setNumberFormat("h:mmam/pm");
 
   var curWaitTimeFormula = "IF(OR("+orderStateCell+"=\"Present\","+
@@ -102,7 +102,7 @@ Worksheet.prototype.printLabel = function(orderNumber, advanceState) {
 
   var order = this.worksheet.getRowAsObject(rowIndex);
   Logger.log(JSON.stringify(order));
-  
+
   // retrieve filename from row
   if (order['Label Doc Link'] == "") {
     // the label was not generated yet, so attempt now
@@ -116,9 +116,11 @@ Worksheet.prototype.printLabel = function(orderNumber, advanceState) {
     Browser.msgBox('Print was unsuccessful for order: ' + orderNumber);
     return false;
   }
-  if (advanceState) {
-    return this.validateAndAdvanceState(orderNumber, 'Present');
-  }
+
+  if (advanceState && (rowIndex != this.validateAndAdvanceState(orderNumber, 'Present')))
+    return false;
+
+  return true;
 }
 
 Worksheet.prototype.setState = function(orderNumber, newState) {
@@ -146,11 +148,11 @@ Worksheet.prototype.validateAndAdvanceState = function(orderNumber, fromState) {
   var rowIndex = this.searchForTransaction('Order Number', parseInt(orderNumber));
   if (rowIndex == -1) {
     Browser.msgBox("Unable to locate Order Number: " + orderNumber);
-    return;
+    return -1;
   }
   if (this.order_states.indexOf(fromState) == -1){
     Browser.msgBox("State '"+fromState+" not found in state machine!");
-    return;
+    return -1;
   }
 
   var order = this.worksheet.getRowAsObject(rowIndex);
@@ -160,14 +162,16 @@ Worksheet.prototype.validateAndAdvanceState = function(orderNumber, fromState) {
   var stateIndex = this.order_states.indexOf(current_state);
 
   if (stateIndex == this.order_states.length - 1) {
-    throw "Order: " + orderNumber + " is already at the end of the State Machine!";
+    Browser.msgBox("Order: " + orderNumber + " is already at the end of the State Machine!");
+    return -1;
   }
 
   // increment state
   var new_state = this.order_states[stateIndex + 1];
   var desired_new_state = this.order_states.indexOf(fromState) + 1;
   if (new_state != this.order_states[desired_new_state]){
-    throw "Order " + orderNumber + " cannot transition to " + this.order_states[desired_new_state] + ' from ' + current_state;
+    Browser.msgBox("Order " + orderNumber + " cannot transition to " + this.order_states[desired_new_state] + ' from ' + current_state);
+    return -1;
   }
 
   // update state in object
@@ -186,6 +190,6 @@ Worksheet.prototype.validateAndAdvanceState = function(orderNumber, fromState) {
 
   var timeCell = this.worksheet.getColumnLetter("Time " + new_state) + rowIndex;
   this.worksheet.worksheet.getRange(timeCell).setNumberFormat("h:mmam/pm");
-  
+
   return rowIndex;
 }
