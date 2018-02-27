@@ -90,6 +90,8 @@ function createLabelFile(orderNumber, orderDetails, txnMetadata, customerName, t
   var body = editableLabelDoc.getBody();
   formatLabelFromSquare(body, orderNumber, orderDetails, txnMetadata, customerName, totalMeals, totalSoups);
 
+  editableLabelDoc.saveAndClose();
+
   return editableLabelDoc.getUrl();
 
 }
@@ -186,7 +188,7 @@ function printGoogleDocument(docID, printerID, docName) {
   var payload = {
     "printerid" : printerID,
     "title"     : docName,
-    "content"   : DriveApp.getFileById(docID).getBlob(),
+    "content"   : docId,
     "contentType": "google.kix",
     "ticket"    : JSON.stringify(ticket)
   };
