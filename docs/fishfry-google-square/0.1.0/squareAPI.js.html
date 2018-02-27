@@ -88,7 +88,7 @@
 <section>
   <article>
     <pre class="prettyprint source linenums"><code>function squareAPI() {
-
+  //TODO: replace with nodeJS package? https://docs.connect.squareup.com/articles/client-libraries#nodejsclientlibrary
 }
 
 squareAPI.prototype.call = function(url, params) {
@@ -203,6 +203,20 @@ squareAPI.prototype.TransactionMetadata = function (location_id, order_id, creat
     throw "Transaction " + order_id + " not found in TransactionMetadata!";
 
   return {origin: origin, customer_id: customer_id, note: note};
+}
+
+squareAPI.prototype.locations = function() {
+  // https://docs.connect.squareup.com/api/connect/v1#get-locations
+  var url = 'https://connect.squareup.com/v1/me/locations'
+  return this.call(url);
+}
+
+squareAPI.prototype.pullPaymentsSince = function(sinceX) {
+  // https://docs.connect.squareup.com/api/connect/v1#navsection-payments
+//  var locations = this.locations();
+  var location_id = 'me';
+  var url = 'https://connect.squareup.com/v1/' + location_id + '/payments?begin_time=' + sinceX + '&amp;end_time=' + new Date().toISOString();
+  return this.call(url);
 }
 
 var api = squareAPI();

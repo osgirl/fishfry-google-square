@@ -84,7 +84,7 @@ function formatLabelFromSheet(orderDetails) {
 }
 
 function createLabelFile(orderNumber, orderDetails, txnMetadata, customerName, totalMeals, totalSoups) {
-  var editableLabelDoc = newLabelTemplate(orderDetails.id);
+  var editableLabelDoc = newLabelTemplate("Order " + orderNumber + ": " + customerName);
   //for each meal, enter into label
 
   var body = editableLabelDoc.getBody();
@@ -128,7 +128,6 @@ function printLabelFromFile(filename_url) {
 
   return printSuccessful;
 }
-
 
 //https://ctrlq.org/code/20061-google-cloud-print-with-apps-script
 function getCloudPrintService() {
