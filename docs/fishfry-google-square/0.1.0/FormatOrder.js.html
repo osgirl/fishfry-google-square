@@ -203,6 +203,7 @@ FormatOrder.prototype.ConvertSquareToSheet = function(txnMetadata, orderDetails,
   var result = {
     "Order Number": orderNumber,
     "Payment ID": orderDetails.id,
+    "Total Amount": parseInt(orderDetails.total_collected_money.amount)/100,
     "Order Received Date/Time": convertISODate(new Date(orderDetails.created_at)),
     "Last Name": lastName, //TODO: timing issue around fetching this prematurely?
     "Expedite": "No",
