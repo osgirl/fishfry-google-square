@@ -109,7 +109,7 @@ simulateSquare.prototype.Payment = function() {
     creator_id: this.randomUserId(),
     device: this.Device(),
     payment_url: this.PaymentURL(id),
-    receipt_url: 'simulated_url://'+this.randomString(50),
+    receipt_url: 'simulated_url://'+this.randomString(30),
     inclusive_tax_money: this.Money(),
     additive_tax_money: this.Money(),
     tax_money: this.Money(),
@@ -133,9 +133,9 @@ simulateSquare.prototype.Payment = function() {
 // https://docs.connect.squareup.com/api/connect/v1#datatype-paymentdiscount
 simulateSquare.prototype.PaymentDiscount = function() {
   return {
-    name: '',
+    name: 'PaymentDiscount: ' + this.randomString(5),
     applied_money: this.Money(),
-    discount_id: ''
+    discount_id: this.randomId()
   };
 }
 
@@ -165,24 +165,24 @@ simulateSquare.prototype.PaymentItemization = function() {
     net_sales_money: this.Money(),
     taxes: this.randomList(1, 'PaymentTax'),
     discounts: this.randomList(1, 'PaymentDiscount'),
-    modifiers: this.randomList(1, 'PaymentModifier')
+    modifiers: this.randomList(2, 'PaymentModifier')
   };
 }
 
 // https://docs.connect.squareup.com/api/connect/v1#datatype-paymentitemdetail
 simulateSquare.prototype.PaymentItemDetail = function() {
   return {
-    category_name: '',
-    sku: '',
+    category_name: 'Category: ' + this.randomString(5),
+    sku: this.randomString(12),
     item_id: this.randomId(),
-    item_variation_id: ''
+    item_variation_id: this.randomId()
   };
 }
 
 // https://docs.connect.squareup.com/api/connect/v1#datatype-paymentmodifier
 simulateSquare.prototype.PaymentModifier = function() {
   return {
-    name: '',
+    name: 'PaymentModifier: ' + this.randomString(3),
     applied_money: this.Money(),
     modifier_option_id: this.randomId()
   };
@@ -196,7 +196,7 @@ simulateSquare.prototype.PaymentTax = function() {
     'INCLUSIVE'
   ];
   return {
-    name: '',
+    name: 'PaymentTax: ' + this.randomString(5),
     applied_money: this.Money(),
     rate: '',
     inclusion_type: this.randomChoice(feeinclusiontype),
@@ -240,9 +240,9 @@ simulateSquare.prototype.Tender = function() {
   return {
     id: this.randomId(),
     type: this.randomChoice(type),
-    name: '',
+    name: 'Tender: ' + this.randomString(3),
     employee_id: this.randomChoice(this.employee_ids),
-    receipt_url: '',
+    receipt_url: 'simulated_url://' + this.randomString(12),
     card_brand: this.randomChoice(card_brand),
     pan_suffix: '',
     entry_method: this.randomChoice(entry_method),
@@ -263,7 +263,7 @@ simulateSquare.prototype.Refund = function() {
   ];
   return {
     type: this.randomChoice(type),
-    reason: '',
+    reason: 'Refund: ' + this.randomString(5),
     refunded_money: this.Money(),
     created_at: this.iso8601(),
     processed_at: this.iso8601(),
