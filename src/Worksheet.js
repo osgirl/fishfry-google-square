@@ -64,6 +64,10 @@ Worksheet.prototype.upsertTransaction = function (proposedOrder) {
 }
 
 Worksheet.prototype.updateWaitTimeFormulas = function (rowIndex) {
+  if (rowIndex < 0) {
+    Logger.log('Invalid rowIndex: ' + rowIndex);
+    return;
+  }
   // find the column letters that represents "current wait time", "order state", "time present"
   var curWaitTimeCell = this.worksheet.getColumnLetter("Current Wait Time") + rowIndex;
   var orderStateCell  = this.worksheet.getColumnLetter("Order State") + rowIndex;

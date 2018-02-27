@@ -119,7 +119,7 @@ FormatOrder.prototype.ConvertSquareToSheet = function(txnMetadata, orderDetails,
     "Last Name": lastName, //TODO: timing issue around fetching this prematurely?
     "Expedite": "No",
     "Note on Order": txnMetadata.note,//TODO: not sure this is the correct field
-    "Label Doc Link": createLabelFile(orderNumber, orderDetails, lastName, mealCount, soupCount),
+    "Label Doc Link": createLabelFile(orderNumber, orderDetails, txnMetadata, lastName, mealCount, soupCount),
     "Order Venue": (this.getStateFromOrigin(txnMetadata.origin) == "Present") ? "In Person" : "Online",
     "Order State": this.getStateFromOrigin(txnMetadata.origin),
     "Square Receipt Link": orderDetails.receipt_url,

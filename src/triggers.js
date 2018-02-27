@@ -133,6 +133,7 @@ function notifySidebars() {
 
 function printLabel(order_id) {
   var worksheet = new Worksheet();
+  // the following call will print label & advance state
   if (worksheet.printLabel(order_id)) {
     Browser.msgBox("Print successful.");
   }
