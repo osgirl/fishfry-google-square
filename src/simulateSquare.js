@@ -10,6 +10,8 @@ function simulateSquare() {
   ];
   var menu = new menuItems();
   this.items = menu.ingredients;
+  this.meals = menu.meals;
+  this.sides = menu.sides;
 }
 
 simulateSquare.prototype.NewOrder = function() {
@@ -24,7 +26,7 @@ simulateSquare.prototype.NewTransaction = function() {
 //        'EXTERNAL_API'
     ]),
     customer_id: this.randomUserId(),
-    note: 'Transaction Note: ' + this.randomString(20)
+    note: 'Transaction Note: ' + this.randomString(10)
   };
 }
 
@@ -150,7 +152,7 @@ simulateSquare.prototype.PaymentItemization = function() {
     'GIFT_CARD_UNKNOWN',
     'OTHER'
   ];
-  var item = this.randomChoice(this.items);
+  var item = this.randomChoice(this.meals);
   return {
     name: item,
     quantity: this.randomInt(5),
@@ -182,7 +184,7 @@ simulateSquare.prototype.PaymentItemDetail = function() {
 // https://docs.connect.squareup.com/api/connect/v1#datatype-paymentmodifier
 simulateSquare.prototype.PaymentModifier = function() {
   return {
-    name: 'PaymentModifier: ' + this.randomString(3),
+    name: this.randomChoice(this.sides), //'PaymentModifier: ' + this.randomString(3),
     applied_money: this.Money(),
     modifier_option_id: this.randomId()
   };
