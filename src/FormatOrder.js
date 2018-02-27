@@ -109,6 +109,7 @@ FormatOrder.prototype.ConvertSquareToSheet = function(txnMetadata, orderDetails,
   var mealCount = order.servingCount('MEAL');
   var soupCount = order.servingCount('SOUP');
   var orderNumber = this.getOrderNumberAtomic();
+  var fmtLabel = new FormatLabel();
 
   // format data for Sheet
   var result = {
@@ -119,7 +120,7 @@ FormatOrder.prototype.ConvertSquareToSheet = function(txnMetadata, orderDetails,
     "Last Name": lastName, //TODO: timing issue around fetching this prematurely?
     "Expedite": "No",
     "Note on Order": txnMetadata.note,//TODO: not sure this is the correct field
-    "Label Doc Link": createLabelFile(orderNumber, orderDetails, txnMetadata, lastName, mealCount, soupCount),
+    "Label Doc Link": fmtLabel.createLabelFile(orderNumber, orderDetails, txnMetadata, lastName, mealCount, soupCount),
     "Order Venue": (this.getStateFromOrigin(txnMetadata.origin) == "Present") ? "In Person" : "Online",
     "Order State": this.getStateFromOrigin(txnMetadata.origin),
     "Square Receipt Link": orderDetails.receipt_url,
@@ -146,16 +147,4 @@ FormatOrder.prototype.ConvertSquareToSheet = function(txnMetadata, orderDetails,
   }
 
   return result;
-}
-
-/**
- * Formats strings into Google Sheets-compliant output as: 03/14/2018 05:12PM
- * 
- * @param {Date} date
- *   input date object to be formatted
- * @returns {string} formatted date
- */
-function convertISODate(date){
-// TODO: why isn't seconds here?
-  return Utilities.formatDate(date, "EST", "MM/dd/yyyy hh:mma");
 }
