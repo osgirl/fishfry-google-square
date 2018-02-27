@@ -50,6 +50,15 @@
 <div class="orderListDiv">
   <ul id="orderList"></ul>
 </div>
+<div class="printerDiv">
+  <fieldset>
+    <legend>Printer:</legend>
+    <i>Select which printer to send the document to:</i>
+    <select id='printerOptions' >
+
+    </select>
+  </fieldset>
+</div>
 <div class="printDiv">
   <fieldset>
     <legend>Print Labels:</legend>
@@ -66,15 +75,6 @@
     <input type="number" min="0" max="9999" name="reprint" id="ReprintOrderNumber" placeholder="e.g. 2051"/>
     <input type="button" name="reprint" value="Reprint" onclick="reprintLabel();"/>
     <!--upon submit, clear field -->
-  </fieldset>
-</div>
-<div class="printerDiv">
-  <fieldset>
-    <legend>Printer:</legend>
-    <i>Select which printer to send the document to</i>
-    <select id='printerOptions' >
-
-    </select>
   </fieldset>
 </div>
 </div>

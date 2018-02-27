@@ -7,7 +7,9 @@ function FormatLabel() {
  */
 FormatLabel.prototype.newLabelTemplate = function(filename) {
   //create template of label file
-  var labelTemplateFile = DriveApp.getFileById(DocumentApp.openByUrl("https://docs.google.com/document/d/1rLpp1hhFASftN5VvGx2VFz_fKE2WoNqEhF2cJxW5YhI/edit").getId());
+  var template_url = "https://docs.google.com/document/d/1rLpp1hhFASftN5VvGx2VFz_fKE2WoNqEhF2cJxW5YhI/edit";
+  template_url = 'https://docs.google.com/document/d/1Oc7jDq-KnyYZ2YND9MUBzNtdokU85CQJeq-CSknexWY/edit'; // from Markus
+  var labelTemplateFile = DriveApp.getFileById(DocumentApp.openByUrl(template_url).getId());
   var labelsFolder = DriveApp.getFoldersByName("ff_labels").next();
 
   // TODO: verify file doesn't exist before we try to setName?
@@ -19,12 +21,12 @@ FormatLabel.prototype.newLabelTemplate = function(filename) {
 
 FormatLabel.prototype.formatLabelFromSquare = function(body, orderNumber, orderDetails, txnMetadata, customerName, totalMeals, totalSoups) {
   var mealCount = 1;
-  var font = 'Courier New';
+  var font = 'Arial';
   orderDetails.itemizations.forEach( function(item) {
     // 26 characters at 14pt
     var line1 = body
       .appendParagraph(pad('    ', orderNumber.toString(), true)
-        + '              '
+        + '                     '
         + pad('  ', mealCount.toString(), true)
         + " of "
         + pad('  ', totalMeals.toString(), true))
@@ -38,30 +40,38 @@ FormatLabel.prototype.formatLabelFromSquare = function(body, orderNumber, orderD
       .appendParagraph(customerName)
       .setFontFamily(font)
       .setBold(false)
-      .setFontSize(10)
+      .setFontSize(11)
       .setAlignment(DocumentApp.HorizontalAlignment.RIGHT);
     // 33 characters at 11pt
     var line3 = body
-      .appendParagraph(item.item_variation_name
-        + "   "
-        + pad('    ', item.modifiers[0].name, true)
-        + "   "
+      .appendParagraph(item.name
+        + " (" + item.item_variation_name + ")"
+        + " "
         + pad('  ', totalSoups.toString(), true)
         + " Soup")
       .setFontFamily(font)
       .setBold(true)
-      .setFontSize(11)
+      .setFontSize(12)
       .setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-    // 37 characters at 10pt
+    // 33 characters at 11pt
     var line4 = body
+      .appendParagraph(item.modifiers[0].name)
+      .setFontFamily(font)
+      .setBold(true)
+      .setFontSize(12)
+      .setAlignment(DocumentApp.HorizontalAlignment.LEFT);
+    // 37 characters at 10pt
+    var line5 = body
       .appendParagraph(txnMetadata.note)
       .setFontFamily(font)
       .setBold(false)
-      .setFontSize(10)
+      .setFontSize(11)
       .setAlignment(DocumentApp.HorizontalAlignment.LEFT);
 
-    body.appendPageBreak();
     mealCount++;
+    if (mealCount < totalMeals) {
+        body.appendPageBreak();
+    }
   });
   // XXXX              XX of XX
   //               XXXXXXXXXXXX
@@ -85,7 +95,7 @@ FormatLabel.prototype.createLabelFile = function(orderNumber, orderDetails, txnM
   var editableLabelDoc = this.newLabelTemplate("Order " + orderNumber + ": " + customerName);
   //for each meal, enter into label
 
-  var body = editableLabelDoc.getBody();
+  var body = editableLabelDoc.getBody().setText('');
   this.formatLabelFromSquare(body, orderNumber, orderDetails, txnMetadata, customerName, totalMeals, totalSoups);
   var url = editableLabelDoc.getUrl();
   editableLabelDoc.saveAndClose();
