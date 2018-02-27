@@ -68,6 +68,15 @@
     <!--upon submit, clear field -->
   </fieldset>
 </div>
+<div class="printerDiv">
+  <fieldset>
+    <legend>Printer:</legend>
+    <i>Select which printer to send the document to</i>
+    <select id='printerOptions' >
+
+    </select>
+  </fieldset>
+</div>
 </div>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
@@ -77,8 +86,22 @@
   $( function() {
 //    $( "input" ).checkboxradio();
 //    $( "fieldset" ).controlgroup();
-
   } );
+
+  //TODO: should wait until document is "ready"?
+  // get a list of available printers
+  google.script.run.withSuccessHandler(printersAvailable).getPrinterList();
+
+  function printersAvailable(arg) {
+  console.log(arg);
+    var select = document.getElementById('printerOptions');
+    for (var i in arg) {
+      var option = document.createElement('option');
+      option.text = arg[i].displayName;
+      option.value = arg[i].id;
+      select.appendChild(option);
+    }
+  }
 
   function validateOrderNumber(orderNumber) {
     if (orderNumber === null || orderNumber === undefined || orderNumber == "") {
@@ -96,9 +119,10 @@
       $("#spinner").hide();
       return;
     }
+    var select = document.getElementById('printerOptions');
 
     //TODO: need callback from server to confirm correct order_id to user ... it fails silently now
-    google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onFailure).printLabel(order.value);
+    google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onFailure).printLabel(order.value, select.value);
     $(":input").prop("disabled", true);
   };
 
@@ -110,9 +134,10 @@
       $("#spinner").hide();
       return;
     }
+    var select = document.getElementById('printerOptions');
 
     //TODO: need callback from server to confirm correct order_id to user ... it fails silently now
-    google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onFailure).reprintLabel(order.value);
+    google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onFailure).reprintLabel(order.value, select.value);
     $(":input").prop("disabled", true);
   };
 

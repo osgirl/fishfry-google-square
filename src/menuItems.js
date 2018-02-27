@@ -14,6 +14,18 @@ function menuItems() {
         'French Fries',
         'Red Potato'
     ];
+    this.meals = [
+        'Breaded Fish',
+        'Baked Fish',
+        'Breaded Shrimp',
+        'Baked Shrimp'
+    ];
+    this.sides = [
+        'Mac & Cheese',
+        'Grilled Cheese',
+        'French Fries',
+        'Red Potato'
+    ];
     this.types = [
         'MEAL',
         'SIDE',
