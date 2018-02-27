@@ -111,7 +111,7 @@ function createLabelFileFromSheet(orderDetails) {
 function printLabelFromFile(filename_url) {
   // verify filename exists and we have access to it
   var file = null;
-  var printer = null;
+  var printer = '95bc0f2e-5304-762c-5cca-3508d758c0fe';
   try {
     file = DocumentApp.openByUrl(filename_url)
   } catch (e) {
@@ -146,6 +146,20 @@ function getCloudPrintService() {
     .setParam('approval_prompt', 'force');
 }
 
+function getOAuthToken() {
+  var cache = CacheService.getDocumentCache();
+  if (cache !== null) {
+    var token = cache.get("bearer-token");
+    if (token !== null) {
+      return token;
+    }
+
+  }
+  var token = getCloudPrintService().getAccessToken();
+  cache.put("bearer-token", token, 21600); // cache for 6 hours
+  return token;
+}
+
 function authCallback(request) {
   var isAuthorized = getCloudPrintService().handleCallback(request);
   if (isAuthorized) {
@@ -158,7 +172,7 @@ function authCallback(request) {
 function getPrinterList() {
   var response = UrlFetchApp.fetch('https://www.google.com/cloudprint/search', {
     headers: {
-      Authorization: 'Bearer ' + getCloudPrintService().getAccessToken()
+      Authorization: 'Bearer ' + getOAuthToken()
     },
     muteHttpExceptions: true
   }).getContentText();
@@ -184,10 +198,11 @@ function printGoogleDocument(docID, printerID, docName) {
     }
   };
 
+  // https://stackoverflow.com/questions/30565554/oauth2-with-google-cloud-print
   var payload = {
     "printerid" : printerID,
     "title"     : docName,
-    "content"   : DriveApp.getFileById(docID).getBlob(),
+    "content"   : docID,
     "contentType": "google.kix",
     "ticket"    : JSON.stringify(ticket)
   };
@@ -196,7 +211,7 @@ function printGoogleDocument(docID, printerID, docName) {
     method: "POST",
     payload: payload,
     headers: {
-      Authorization: 'Bearer ' + getCloudPrintService().getAccessToken()
+      Authorization: 'Bearer ' + getOAuthToken()
     },
     "muteHttpExceptions": true
   });
