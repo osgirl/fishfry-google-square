@@ -42,18 +42,24 @@ FormatLabel.prototype.formatLabelFromSquare = function(body, orderNumber, orderD
       .setAlignment(DocumentApp.HorizontalAlignment.RIGHT);
     // 33 characters at 11pt
     var line3 = body
-      .appendParagraph(item.item_variation_name
-        + "   "
-        + pad('    ', item.modifiers[0].name, true)
-        + "   "
+      .appendParagraph(item.name
+        + " (" + item.item_variation_name + ")"
+        + "       "
         + pad('  ', totalSoups.toString(), true)
         + " Soup")
       .setFontFamily(font)
       .setBold(true)
       .setFontSize(11)
       .setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-    // 37 characters at 10pt
+    // 33 characters at 11pt
     var line4 = body
+      .appendParagraph(pad('    ', item.modifiers[0].name, true))
+      .setFontFamily(font)
+      .setBold(true)
+      .setFontSize(10)
+      .setAlignment(DocumentApp.HorizontalAlignment.LEFT);
+    // 37 characters at 10pt
+    var line5 = body
       .appendParagraph(txnMetadata.note)
       .setFontFamily(font)
       .setBold(false)
