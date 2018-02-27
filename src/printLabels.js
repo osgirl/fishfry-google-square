@@ -74,13 +74,12 @@ function formatLabelFromSquare(body, orderNumber, orderDetails, txnMetadata, cus
   // Side: [Fries|Red Potato]
   // Z Soups in Order
 
-  // remove empty first line
-  return body;//.deleteText(0,1);
+  return;
 }
 
 function formatLabelFromSheet(orderDetails) {
   //TODO: format from data available in Sheet
-  return ['test body when not generated from squqre'];
+  return ['test body when not generated from square'];
 }
 
 function createLabelFile(orderNumber, orderDetails, txnMetadata, customerName, totalMeals, totalSoups) {
@@ -89,8 +88,9 @@ function createLabelFile(orderNumber, orderDetails, txnMetadata, customerName, t
 
   var body = editableLabelDoc.getBody();
   formatLabelFromSquare(body, orderNumber, orderDetails, txnMetadata, customerName, totalMeals, totalSoups);
-
-  return editableLabelDoc.getUrl();
+  var url = editableLabelDoc.getUrl();
+  editableLabelDoc.saveAndClose();
+  return url;
 
 }
 /*
