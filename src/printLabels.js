@@ -121,22 +121,16 @@ function printLabelFromFile(filename_url) {
   }
   var printSuccessful = printGoogleDocument(file.getId(), printer, file.getName());
 
-  //TODO: replace 'true' with perform print
-  if (true) {
-    printSuccessful = true;
-  }
-
   return printSuccessful;
 }
 
 //https://ctrlq.org/code/20061-google-cloud-print-with-apps-script
 function getCloudPrintService() {
-  //TODO: replace CLIENT_ID/SECRET
   return OAuth2.createService('print')
     .setAuthorizationBaseUrl('https://accounts.google.com/o/oauth2/auth')
     .setTokenUrl('https://accounts.google.com/o/oauth2/token')
-    .setClientId('CLIENT_ID')
-    .setClientSecret('CLIENT_SECRET')
+    .setClientId(ScriptProperties.getProperty("CLIENT_ID"))
+    .setClientSecret(ScriptProperties.getProperty("CLIENT_SECRET"))
     .setCallbackFunction('authCallback')
     .setPropertyStore(PropertiesService.getUserProperties())
     .setScope('https://www.googleapis.com/auth/cloudprint')
