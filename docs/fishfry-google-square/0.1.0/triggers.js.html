@@ -106,6 +106,13 @@
     .addItem('Simulate New Order', 'simulateNewOrder')
     .addToUi();
 
+  SpreadsheetApp.getUi()
+    .createMenu('CloudPrint')
+    .addItem('Authorization URL', 'testPrinterAccess')
+    .addItem('Clear OAuth Cache', 'clearOAuthCache')
+    .addItem('Show Printers', 'showPrinters')
+    .addToUi();
+
   //TODO: validate/install triggers
 }
 
@@ -115,7 +122,7 @@
  */
 function onEdit(e) {
   //TOOD: scan for any rows that have Present but nothing in current wait time
-  notifySidebars();
+  //notifySidebars();
 }
 
 function pullPaymentsOff() {
@@ -205,33 +212,52 @@ function showClosingSidebar() {
 function notifySidebars() {
   var worksheet = new Worksheet();
   var allOrders = worksheet.worksheet.all();
-  
+
   var presentOrders = allOrders.filter(function (order) {
     return order["Order State"] === "Present";
   });
-  
+
   var labeledOrders = allOrders.filter(function (order) {
     return order["Order State"] === "Labeled";
   });
-  
+
   var readyOrders = allOrders.filter(function (order) {
     return order["Order State"] === "Ready";
   });
-  
+
 }
 
-function printLabel(order_id) {
+function testPrinterAccess() {
+  Browser.msgBox(showAuthorizationURL());
+}
+
+function clearOAuthCache() {
+  clearPrinterOAuthCache();
+  Browser.msgBox('Cache Cleared!');
+}
+
+function showPrinters() {
+  var printers = getPrinterList();
+  var str_printers = '';
+  for (var p in printers) {
+    str_printers += printers[p].id + ' ' + printers[p].name + ' ' + printers[p].description + '\\n';
+  }
+  Browser.msgBox(str_printers);
+}
+
+function printLabel(order_id, printer_id) {
   var worksheet = new Worksheet();
-  if (worksheet.printLabel(order_id)) {
-    Browser.msgBox("Print successful.");
+  // the following call will print label &amp; advance state
+  if (worksheet.printLabel(order_id, printer_id)) {
+    Browser.msgBox("Print successful for: " + order_id);
   }
 }
 
-function reprintLabel(order_id) {
+function reprintLabel(order_id, printer_id) {
   var worksheet = new Worksheet();
   // we do not validate nor check state for reprinting here
   //TODO: perhaps we should require minimum >= present?
-  worksheet.reprintLabel(order_id);
+  worksheet.reprintLabel(order_id, printer_id);
 }
 
 function markPresent(order_id) {

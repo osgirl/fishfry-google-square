@@ -153,6 +153,10 @@ Worksheet.prototype.upsertTransaction = function (proposedOrder) {
 }
 
 Worksheet.prototype.updateWaitTimeFormulas = function (rowIndex) {
+  if (rowIndex &lt; 0) {
+    Logger.log('Invalid rowIndex: ' + rowIndex);
+    return;
+  }
   // find the column letters that represents "current wait time", "order state", "time present"
   var curWaitTimeCell = this.worksheet.getColumnLetter("Current Wait Time") + rowIndex;
   var orderStateCell  = this.worksheet.getColumnLetter("Order State") + rowIndex;
@@ -174,11 +178,11 @@ Worksheet.prototype.updateWaitTimeFormulas = function (rowIndex) {
   this.worksheet.worksheet.getRange(finalWaitTimeCell).setFormula(finalWaitTimeFormula).setNumberFormat("[m] \"minutes\"");
 }
 
-Worksheet.prototype.reprintLabel = function (orderNumber) {
-  this.printLabel(orderNumber, false);
+Worksheet.prototype.reprintLabel = function (orderNumber, printerId) {
+  this.printLabel(orderNumber, printerId, false);
 }
 
-Worksheet.prototype.printLabel = function(orderNumber, advanceState) {
+Worksheet.prototype.printLabel = function(orderNumber, printerId, advanceState) {
   if (typeof(advanceState)==='undefined'){
     advanceState = true;
   }
@@ -195,13 +199,14 @@ Worksheet.prototype.printLabel = function(orderNumber, advanceState) {
   // retrieve filename from row
   if (order['Label Doc Link'] == "") {
     // the label was not generated yet, so attempt now
-    order['Label Doc Link'] = createLabelFileFromSheet(order);
+    var fmtLabel = new FormatLabel();
+    order['Label Doc Link'] = fmtLabel.createLabelFileFromSheet(order);
     // we need to update this cell directly as orm.update() will blow away formulas
     this.worksheet.updateCell(rowIndex, 'Label Doc Link', order['Label Doc Link']);
   }
 
   //TODO: catch and raise exception
-  if (printLabelFromFile(order['Label Doc Link']) !== true) {
+  if (printLabelFromFile(order['Label Doc Link'], printerId) !== true) {
     Browser.msgBox('Print was unsuccessful for order: ' + orderNumber);
     return false;
   }

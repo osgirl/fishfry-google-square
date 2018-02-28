@@ -1,3 +1,8 @@
+function test() {
+  var a = squareAPI();
+  a.OrderDetails('', 'ctOhb9LkHmz83Dt1ivXkLQB');
+}
+
 function squareAPI() {
   //TODO: replace with nodeJS package? https://docs.connect.squareup.com/articles/client-libraries#nodejsclientlibrary
 }
@@ -7,17 +12,25 @@ squareAPI.prototype.call = function(url, params) {
     params = {};
   }
   // always include authorization in header
-  if (!('headers') in params) {
+  if (!('headers' in params)) {
     params['headers'] = {
       "Authorization": "Bearer " + PropertiesService.getScriptProperties().getProperty("SQUARE_ACCESS_TOKEN")
     }
   }
   try {
+    console.log("squareAPI.call: invoking url " + url);
     var response = UrlFetchApp.fetch(url, params);
+    console.log("squareAPI.call: returned  " + response.getContentText());
     return JSON.parse(response.getContentText());
   } catch (e) {
+    console.error("squareAPI.call: returned error  " + e);
+
     return "";
   }
+}
+
+function bob(){
+  Logger.log(PropertiesService.getScriptProperties().getProperty("SQUARE_ACCESS_TOKEN"));
 }
 
 /**
@@ -94,6 +107,8 @@ squareAPI.prototype.TransactionMetadata = function (location_id, order_id, creat
   var origin = "";
   var customer_id = "";
   var note = "";
+  
+  console.log(responseObj);
 
   // because we're searching on a time-based window, the call may return up to 50 transactions (via pagination).
   // we safely? assume that our transactional load is so low that we do not receive more than 50 transactions within the same second.

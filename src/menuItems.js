@@ -1,14 +1,14 @@
 function menuItems() {
     this.ingredients = [
-        'Breaded Fish',
+        'Hand Breaded Fish',
         'Baked Fish',
-        'Breaded Shrimp',
+        'Hand Breaded Shrimp',
         'Baked Shrimp',
 //        'COMBO FF FS',
 //        'COMBO FF BS',
 //        'COMBO BF FS',
 //        'COMBO BF BS',
-        'Clam Chowder',
+        'Clam Chowder Soup',
         'Mac & Cheese',
         'Grilled Cheese',
         'French Fries',
@@ -33,15 +33,15 @@ function menuItems() {
     ];
     // TODO: get menu items from Square
     this.items = {
-        'Breaded Fish': new menuItem({
+        'Hand Breaded Fish': new menuItem({
           ingredients: [
-            new menuItemIngredient('Breaded Fish', 1)
+            new menuItemIngredient('Hand Breaded Fish', 1)
           ],
           serving: 'MEAL'
         }),
-        'Breaded Fish (Child)': new menuItem({
+        'Hand Breaded Fish (Child)': new menuItem({
           ingredients: [
-            new menuItemIngredient('Breaded Fish', 0.5)
+            new menuItemIngredient('Hand Breaded Fish', 0.5)
           ],
           serving: 'MEAL'
         }),
@@ -57,15 +57,15 @@ function menuItems() {
           ],
           serving: 'MEAL'
         }),
-        'Breaded Shrimp': new menuItem({
+        'Hand Breaded Shrimp': new menuItem({
           ingredients: [
-            new menuItemIngredient('Breaded Shrimp', 1)
+            new menuItemIngredient('Hand Breaded Shrimp', 1)
           ],
           serving: 'MEAL'
         }),
-        'Breaded Shrimp (Child)': new menuItem({
+        'Hand Breaded Shrimp (Child)': new menuItem({
           ingredients: [
-            new menuItemIngredient('Breaded Shrimp', 0.5)
+            new menuItemIngredient('Hand Breaded Shrimp', 0.5)
           ],
           serving: 'MEAL'
         }),
@@ -121,9 +121,9 @@ function menuItems() {
           ],
           serving: 'SIDE'
         }),
-        'Clam Chowder': new menuItem({
+        'Clam Chowder Soup': new menuItem({
           ingredients: [
-            new menuItemIngredient('Clam Chowder', 1)
+            new menuItemIngredient('Clam Chowder Soup', 1)
           ],
           serving: 'SOUP'
         }),

@@ -33,7 +33,7 @@ function onOpen() {
  */
 function onEdit(e) {
   //TOOD: scan for any rows that have Present but nothing in current wait time
-  notifySidebars();
+  //notifySidebars();
 }
 
 function pullPaymentsOff() {

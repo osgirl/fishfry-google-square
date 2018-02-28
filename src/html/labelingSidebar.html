@@ -120,7 +120,7 @@
       return;
     }
     var select = document.getElementById('printerOptions');
-
+    console.log(select.value);
     //TODO: need callback from server to confirm correct order_id to user ... it fails silently now
     google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onFailure).printLabel(order.value, select.value);
     $(":input").prop("disabled", true);

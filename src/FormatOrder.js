@@ -1,5 +1,5 @@
 function FormatOrder() {
-  this.api = api;
+  this.api = new squareAPI();
 }
 
 /**

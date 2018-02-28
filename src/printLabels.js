@@ -49,7 +49,7 @@ function getOAuthToken() {
 
   }
   var token = getCloudPrintService().getAccessToken();
-  cache.put("bearer-token", token, 21600); // cache for 6 hours
+  cache.put("bearer-token", token, 60); // cache for 6 hours
   return token;
 }
 

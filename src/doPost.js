@@ -1,3 +1,8 @@
+function doGet(e) {
+  Logger.log('doGet');
+  return HtmlService.createHtmlOutput("doGet from fish fry");
+}
+
 /**
  * This script processes the webhook request from the Square Connect V1 API which
  * indicates that an order has been created or updated. We use the information
@@ -19,18 +24,20 @@
  * https://docs.connect.squareup.com/api/connect/v1#setupwebhooks
  */
 function doPost(e) {  
+  Logger.log(e);
   if (e.hasOwnProperty('postData') && e.postData.type != "application/json")
     throw "Invalid Input Type!"
   
   var input = JSON.parse(e.postData.contents);
   
-  console.log("webhook: " + e.postData.contents);
+  Logger.log("webhook: " + e.postData.contents);
+  console.log(e);
   
   // PAYMENT_UPDATED will be sent regardless of creation or update
   if (input.event_type == 'PAYMENT_UPDATED'){
     var fmt_order = new FormatOrder();
     var worksheet = new Worksheet();
-    var txn = fmt_order.SquareTransactionToSheet(input.location_id, input.entry_id);
+    var txn = fmt_order.SquareTransactionToSheet(input.location_id, input.entity_id);
     worksheet.upsertTransaction(txn);
   }
   
