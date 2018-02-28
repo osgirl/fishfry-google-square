@@ -4,10 +4,8 @@ function menuItems() {
         'Baked Fish',
         'Hand Breaded Shrimp',
         'Baked Shrimp',
-//        'COMBO FF FS',
-//        'COMBO FF BS',
-//        'COMBO BF FS',
-//        'COMBO BF BS',
+        'Combo Baked Fish & Shrimp',
+        'Combo Hand Breaded Fish & Shrimp',
         'Clam Chowder Soup',
         'Mac & Cheese',
         'Grilled Cheese',
@@ -15,10 +13,13 @@ function menuItems() {
         'Red Potato'
     ];
     this.meals = [
-        'Breaded Fish',
+        'Hand Breaded Fish',
         'Baked Fish',
-        'Breaded Shrimp',
-        'Baked Shrimp'
+        'Hand Breaded Shrimp',
+        'Baked Shrimp',
+        'Combo Baked Fish & Shrimp',
+        'Combo Hand Breaded Fish & Shrimp',
+        'Mac & Cheese'
     ];
     this.sides = [
         'Mac & Cheese',
@@ -34,86 +35,99 @@ function menuItems() {
     // TODO: get menu items from Square
     this.items = {
         'Hand Breaded Fish': new menuItem({
+          abbr: 'Fried Fish',
           ingredients: [
-            new menuItemIngredient('Hand Breaded Fish', 1)
+            new menuItemIngredient('Fried Fish', 1)
           ],
           serving: 'MEAL'
         }),
         'Hand Breaded Fish (Child)': new menuItem({
+          abbr: 'Fried Fish (c)',
           ingredients: [
-            new menuItemIngredient('Hand Breaded Fish', 0.5)
+            new menuItemIngredient('Fried Fish', 0.5)
           ],
           serving: 'MEAL'
         }),
         'Baked Fish': new menuItem({
+          abbr: 'Baked Fish',
           ingredients: [
             new menuItemIngredient('Baked Fish', 1)
           ],
           serving: 'MEAL'
         }),
         'Baked Fish (Child)': new menuItem({
+          abbr: 'Baked Fish',
           ingredients: [
             new menuItemIngredient('Baked Fish', 0.5)
           ],
           serving: 'MEAL'
         }),
         'Hand Breaded Shrimp': new menuItem({
+          abbr: 'Fried Shrimp',
           ingredients: [
-            new menuItemIngredient('Hand Breaded Shrimp', 1)
+            new menuItemIngredient('Fried Shrimp', 1)
           ],
           serving: 'MEAL'
         }),
         'Hand Breaded Shrimp (Child)': new menuItem({
+          abbr: 'Fried Shrimp',
           ingredients: [
-            new menuItemIngredient('Hand Breaded Shrimp', 0.5)
+            new menuItemIngredient('Fried Shrimp', 0.5)
           ],
           serving: 'MEAL'
         }),
         'Baked Shrimp': new menuItem({
+          abbr: 'Baked Shrimp',
           ingredients: [
             new menuItemIngredient('Baked Shrimp', 1)
           ],
           serving: 'MEAL'
         }),
         'Baked Shrimp (Child)': new menuItem({
+          abbr: 'Baked Shrimp',
           ingredients: [
             new menuItemIngredient('Baked Shrimp', 0.5)
           ],
           serving: 'MEAL'
         }),
-//        'COMBO FF FS': new menuItem({
-//          ingredients: [
-//            new menuItemIngredient('Breaded Fish', 0.5),
-//            new menuItemIngredient('Breaded Shrimp', 0.5)
-//          ],
-//          serving: 'MEAL'
-//        }),
-//        'COMBO FF BS': new menuItem({
-//          ingredients: [
-//            new menuItemIngredient('Breaded Fish', 0.5),
-//            new menuItemIngredient('Baked Shrimp', 0.5)
-//          ],
-//          serving: 'MEAL'
-//        }),
-//        'COMBO BF FS': new menuItem({
-//          ingredients: [
-//            new menuItemIngredient('Baked Fish', 0.5),
-//            new menuItemIngredient('Breaded Shrimp', 0.5)
-//          ],
-//          serving: 'MEAL'
-//        }),
-//        'COMBO BF BS': new menuItem({
-//          ingredients: [
-//            new menuItemIngredient('Baked Fish', 0.5),
-//            new menuItemIngredient('Baked Shrimp', 0.5)
-//          ],
-//          serving: 'MEAL'
-//        }),
+        'Combo Baked Fish & Shrimp': new menuItem({
+          abbr: 'Bakedombo',
+          ingredients: [
+            new menuItemIngredient('Baked Fish', 0.5),
+            new menuItemIngredient('Baked Shrimp', 0.5)
+          ],
+          serving: 'MEAL'
+        }),
+        'Combo Baked Fish & Shrimp (Child)': new menuItem({
+          abbr: 'Baked Combo',
+          ingredients: [
+            new menuItemIngredient('Baked Fish', 0.25),
+            new menuItemIngredient('Baked Shrimp', 0.25)
+          ],
+          serving: 'MEAL'
+        }),
+        'Combo Hand Breaded Fish & Shrimp': new menuItem({
+          abbr: 'Fried Combo',
+          ingredients: [
+            new menuItemIngredient('Fried Fish', 0.5),
+            new menuItemIngredient('Fried Shrimp', 0.5)
+          ],
+          serving: 'MEAL'
+        }),
+        'Combo Hand Breaded Fish & Shrimp (Child)': new menuItem({
+          abbr: 'Fried Combo',
+          ingredients: [
+            new menuItemIngredient('Fried Fish', 0.25),
+            new menuItemIngredient('Fried Shrimp', 0.25)
+          ],
+          serving: 'MEAL'
+        }),
         'Mac & Cheese': new menuItem({
+          abbr: 'Mac & Cheese',
           ingredients: [
             new menuItemIngredient('Mac & Cheese', 1)
           ],
-          serving: 'SIDE'
+          serving: 'MEAL'
         }),
         'Grilled Cheese': new menuItem({
           ingredients: [
@@ -122,18 +136,21 @@ function menuItems() {
           serving: 'SIDE'
         }),
         'Clam Chowder Soup': new menuItem({
+          abbr: 'Soup',
           ingredients: [
-            new menuItemIngredient('Clam Chowder Soup', 1)
+            new menuItemIngredient('Soup', 1)
           ],
           serving: 'SOUP'
         }),
         'French Fries': new menuItem({
+          abbr: 'FF',
           ingredients: [
             new menuItemIngredient('French Fries', 1)
           ],
           serving: 'SIDE'
         }),
         'Red Potato': new menuItem({
+          abbr: 'Potato',
           ingredients: [
             new menuItemIngredient('Red Potato', 1)
           ],
@@ -168,9 +185,10 @@ menuItems.prototype.ingredientTotals = function() {
 
 
 function menuItem(obj) {
-    this.ingredients = obj['ingredients'];
-    this.serving = obj['serving'];
-    this.quantity = 0;
+  this.abbr = obj['abbr'];
+  this.ingredients = obj['ingredients'];
+  this.serving = obj['serving'];
+  this.quantity = 0;
 
 }
 

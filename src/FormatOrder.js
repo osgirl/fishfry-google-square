@@ -127,16 +127,9 @@ FormatOrder.prototype.ConvertSquareToSheet = function(txnMetadata, orderDetails,
     "Time Present": (this.getStateFromOrigin(txnMetadata.origin) == "Present") ? convertISODate(new Date()) : "", //TODO: fix date formatting
     "Total Meals": mealCount,
     "Total Soups": soupCount,
-//    "Breaded Fish": mealCounts.breadedFishAdult + mealCounts.breadedFishChild + (mealCounts.comboBreadedAdult + mealCounts.comboBreadedChild)*.5,  //TODO: weight based on combo, adult vs child servings from "Settings" sheet
-//    "Baked Fish": mealCounts.bakedFishAdult + mealCounts.bakedFishChild + (mealCounts.comboBakedAdult + mealCounts.comboBakedChild)*.5,  //TODO: weight based on combo, adult vs child servings from "Settings" sheet
-//    "Breaded Shrimp": mealCounts.breadedShrimpAdult + mealCounts.breadedShrimpChild + (mealCounts.comboBreadedAdult + mealCounts.comboBreadedChild)*.5,  //TODO: weight based on combo, adult vs child servings from "Settings" sheet
-//    "Baked Shrimp": mealCounts.bakedShrimpAdult + mealCounts.bakedShrimpChild + (mealCounts.comboBakedAdult + mealCounts.comboBakedChild)*.5,  //TODO: weight based on combo, adult vs child servings from "Settings" sheet
-//    "Mac & Cheese": mealCounts.macAndCheese,
-//    "Grilled Cheese": mealCounts.grilledCheese,
-//    "French Fries": mealCounts.fries,
-//    "Red Potato": mealCounts.redPotato,
     "Soup": soupCount
   };
+  // Add item details
   for (var attrname in ingredients) {
     result[attrname] = ingredients[attrname];
   }

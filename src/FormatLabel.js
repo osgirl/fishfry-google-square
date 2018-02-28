@@ -20,6 +20,7 @@ FormatLabel.prototype.newLabelTemplate = function(filename) {
 }
 
 FormatLabel.prototype.formatLabelFromSquare = function(body, orderNumber, orderDetails, txnMetadata, customerName, totalMeals, totalSoups) {
+  var menu = new menuItems();
   var mealCount = 1;
   var font = 'Arial';
   orderDetails.itemizations.forEach( function(item) {
@@ -44,7 +45,7 @@ FormatLabel.prototype.formatLabelFromSquare = function(body, orderNumber, orderD
       .setAlignment(DocumentApp.HorizontalAlignment.RIGHT);
     // 33 characters at 11pt
     var line3 = body
-      .appendParagraph(item.name
+      .appendParagraph(menu.items[item.name].abbr
         + " (" + item.item_variation_name + ")"
         + " "
         + pad('  ', totalSoups.toString(), true)
