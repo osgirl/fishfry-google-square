@@ -55,22 +55,25 @@ Printer.prototype.OauthToken = function() {
 }
 
 Printer.prototype.getPrinterList = function() {
-  var response = UrlFetchApp.fetch('https://www.google.com/cloudprint/search', {
+  var response = loggedUrlFetch('https://www.google.com/cloudprint/search', {
     headers: {
       Authorization: 'Bearer ' + this.OauthToken()
     },
     muteHttpExceptions: true
   }).getContentText();
 
-  try {
-    var printers = JSON.parse(response).printers;
-  } catch (e) {
-    Browser.msgBox(e);
+  // test for empty response
+  if (isEmpty(response)){
+    var errMsg = "getPrinterList: unable to fetch printer list";
+    console.error(errMsg);
+    Browser.msgBox(errMsg);
     return [];
   }
 
+  var printers = response.printers;
+
   for (var p in printers) {
-    Logger.log("%s %s %s", printers[p].id, printers[p].name, printers[p].description);
+    console.log("getPrinterList: %s %s %s", printers[p].id, printers[p].name, printers[p].description);
   }
   return printers;
 }
@@ -80,10 +83,10 @@ Printer.prototype.PrintFileUrl = function(filename_url) {
   // verify filename exists and we have access to it
   var file = null;
   try {
-    Logger.log(filename_url);
+    console.log("PrintFileUrl: " + filename_url);
     file = DocumentApp.openByUrl(filename_url);
   } catch (e) {
-    Logger.log(e);
+    console.error("PrintFileUrl: exception opening by url, will try by ID: " + e);
     // TODO: sometimes it's unable to open the URL, but if we pass the ID it will succeed...
     return this.PrintFileId(this.IdFromUrl(filename_url));
   }
@@ -91,10 +94,11 @@ Printer.prototype.PrintFileUrl = function(filename_url) {
 }
 
 Printer.prototype.IdFromUrl = function(str) {
+  //TODO: this should really use DriveApp.getFileByUrl().getId() instead of this...
   try {
     return str.substr(str.indexOf('id=')+3);
   } catch (e) {
-    Logger.log(e);
+    console.error("IdFromUrl: execption in parsing url: " + e);
   }
   return null;
 }
@@ -104,8 +108,9 @@ Printer.prototype.PrintFileId = function(fileId) {
   try {
     file = DocumentApp.openById(fileId);
   } catch (e) {
-    Logger.log('Unable to locate ID: ' + fileId);
-    Browser.msgBox(e);
+    var errMsg = "PrintFileId: Unable to locate ID: " + fileId + ": " + e;
+    console.error(errMsg);
+    Browser.msgBox(errMsg);
     return false;
   }
   return this.PrintGoogleDocument(file.getId(), file.getName());l
@@ -134,8 +139,8 @@ Printer.prototype.PrintGoogleDocument = function(docID, docName) {
     "ticket"    : JSON.stringify(ticket)
   };
 
-  console.log('Attempting print for: "' + docName + '" to: ' + this.printerId)
-  var response = UrlFetchApp.fetch('https://www.google.com/cloudprint/submit', {
+  console.log('PrintGoogleDocument: Attempting print for: "' + docName + '" to: ' + this.printerId)
+  var response = loggedUrlFetch('https://www.google.com/cloudprint/submit', {
     method: "POST",
     payload: payload,
     headers: {
@@ -143,17 +148,19 @@ Printer.prototype.PrintGoogleDocument = function(docID, docName) {
     },
     "muteHttpExceptions": true
   });
-
+  // test if response is empty
   try {
     response = JSON.parse(response);
     if (response.success) {
-      Logger.log("%s", response.message);
+      console.log("PrintGoogleDocument: response message: %s", response.message);
       return true;
     } else {
-      Browser.msgBox("Error Code: %s %s", response.errorCode, response.message);
+      var errMsg = "PrintGoogleDocument: Error Code: " + response.errorCode + " " + response.message;
+      console.error(errMsg);
+      Browser.msgBox(errMsg);
       return false;
     }
   } catch (e) {
-    Logger.log(e);
+    console.error("PrintGoogleDocument: exception in parsing response to GCP API call: " + e);
   }
 }

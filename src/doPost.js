@@ -24,14 +24,16 @@ function doGet(e) {
  * https://docs.connect.squareup.com/api/connect/v1#setupwebhooks
  */
 function doPost(e) {  
-  Logger.log(e);
-  if (e.hasOwnProperty('postData') && e.postData.type != "application/json")
-    throw "Invalid Input Type!"
+  console.log('doPost: received payload: ' + e);
+
+  if (e.hasOwnProperty('postData') && e.postData.type != "application/json") {
+    var errMsg = "doPost: invalid input content type for payload";
+    console.error(errMsg);
+    throw errMsg;
+  }
   
   var input = JSON.parse(e.postData.contents);
-  
-  Logger.log("webhook: " + e.postData.contents);
-  console.log(e);
+  console.log("doPost: webhook contents: " + e.postData.contents);
   
   // PAYMENT_UPDATED will be sent regardless of creation or update
   if (input.event_type == 'PAYMENT_UPDATED'){

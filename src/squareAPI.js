@@ -17,20 +17,14 @@ squareAPI.prototype.call = function(url, params) {
       "Authorization": "Bearer " + PropertiesService.getScriptProperties().getProperty("SQUARE_ACCESS_TOKEN")
     }
   }
-  try {
-    console.log("squareAPI.call: invoking url " + url);
-    var response = UrlFetchApp.fetch(url, params);
-    console.log("squareAPI.call: returned  " + response.getContentText());
-    return JSON.parse(response.getContentText());
-  } catch (e) {
-    console.error("squareAPI.call: returned error  " + e);
 
+  var response = loggedUrlFetch(url, params);
+  if (isEmpty(response)) {
+    console.error("squareAPI.call: invoking square API failed");
     return "";
   }
-}
 
-function bob(){
-  Logger.log(PropertiesService.getScriptProperties().getProperty("SQUARE_ACCESS_TOKEN"));
+  return response;
 }
 
 /**
@@ -86,7 +80,7 @@ squareAPI.prototype.TransactionDetails = function(location_id, order_id, created
  * @throws Will throw an error if the API call to Square is not successful for any reason (including customer_id not found)
  */
 squareAPI.prototype.CustomerFamilyName = function(customer_id) {
-  Logger.log(customer_id);
+  console.log("CustomerFamilyName: input is " + customer_id);
   if (customer_id == "")
     return "";
 
@@ -96,6 +90,7 @@ squareAPI.prototype.CustomerFamilyName = function(customer_id) {
   try {
     return responseObj.customer.family_name;
   } catch (e) {
+    console.error("CustomerFamilyName: could not fetch family name from Square API response: " + responseObj);
     return "";
   }
 }
@@ -108,7 +103,7 @@ squareAPI.prototype.TransactionMetadata = function (location_id, order_id, creat
   var customer_id = "";
   var note = "";
   
-  console.log(responseObj);
+  console.log("TransactionMetadata: Txn details: " + responseObj);
 
   // because we're searching on a time-based window, the call may return up to 50 transactions (via pagination).
   // we safely? assume that our transactional load is so low that we do not receive more than 50 transactions within the same second.
@@ -125,8 +120,11 @@ squareAPI.prototype.TransactionMetadata = function (location_id, order_id, creat
     return origin !== "";
   });
 
-  if (origin == "")
-    throw "Transaction " + order_id + " not found in TransactionMetadata!";
+  if (origin == ""){
+    var errMsg = "Transaction " + order_id + " not found in TransactionMetadata!";
+    console.error(errMsg);
+    throw errMsg;
+  }
 
   return {origin: origin, customer_id: customer_id, note: note};
 }
