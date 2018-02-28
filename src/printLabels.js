@@ -1,37 +1,20 @@
-function showAuthorizationURL() {
-  var cpService = getCloudPrintService();
-  var response = cpService.getAuthorizationUrl();
-  return response;
-}
+function Printer (printerId) {
+  this.printerId = printerId;
+  //TODO: validate ID is accessable from script via getPrinterList
 
-function clearPrinterOAuthCache() {
- var cache = CacheService.getDocumentCache();
- cache.remove("bearer-token")
-}
+  this.service = this.getCloudPrintService();
+  this.oauth_token = this.service.getAccessToken();
 
-function printLabelFromFile(filename_url, printerId) {
-  // verify filename exists and we have access to it
-  var file = null;
-  try {
-    file = DocumentApp.openByUrl(filename_url)
-  } catch (e) {
-    Logger.log(e);
-    //TODO: why would it ever get to this state, and we should be returning 'false'
-    return true;
-  }
-  var printSuccessful = printGoogleDocument(file.getId(), printerId, file.getName());
-
-  return printSuccessful;
 }
 
 //https://ctrlq.org/code/20061-google-cloud-print-with-apps-script
-function getCloudPrintService() {
+Printer.prototype.getCloudPrintService = function() {
   return OAuth2.createService('print')
     .setAuthorizationBaseUrl('https://accounts.google.com/o/oauth2/auth')
     .setTokenUrl('https://accounts.google.com/o/oauth2/token')
-    .setClientId(ScriptProperties.getProperty("CLIENT_ID"))
-    .setClientSecret(ScriptProperties.getProperty("CLIENT_SECRET"))
-    .setCallbackFunction('authCallback')
+    .setClientId(PropertiesService.getScriptProperties().getProperty("CLIENT_ID"))
+    .setClientSecret(PropertiesService.getScriptProperties().getProperty("CLIENT_SECRET"))
+    .setCallbackFunction(this.authCallback)
     .setPropertyStore(PropertiesService.getUserProperties())
     .setScope('https://www.googleapis.com/auth/cloudprint')
     .setParam('login_hint', Session.getActiveUser().getEmail())
@@ -39,22 +22,13 @@ function getCloudPrintService() {
     .setParam('approval_prompt', 'force');
 }
 
-function getOAuthToken() {
-  var cache = CacheService.getDocumentCache();
-  if (cache !== null) {
-    var token = cache.get("bearer-token");
-    if (token !== null) {
-      return token;
-    }
-
-  }
-  var token = getCloudPrintService().getAccessToken();
-  cache.put("bearer-token", token, 60); // cache for 6 hours
-  return token;
+Printer.prototype.showAuthorizationURL = function() {
+  var response = this.service.getAuthorizationUrl();
+  return response;
 }
 
-function authCallback(request) {
-  var isAuthorized = getCloudPrintService().handleCallback(request);
+Printer.prototype.authCallback = function(request) {
+  var isAuthorized = this.service.handleCallback(request);
   if (isAuthorized) {
     return HtmlService.createHtmlOutput('You can now use Google Cloud Print from Apps Script.');
   } else {
@@ -62,15 +36,38 @@ function authCallback(request) {
   }
 }
 
-function getPrinterList() {
+Printer.prototype.OauthToken = function() {
+  /*
+  var cache = CacheService.getDocumentCache();
+  if (cache !== null) {
+    var token = cache.get("bearer-token");
+    if (token !== null) {
+      return token;
+    }
+  }
+  var token = this.service.getAccessToken();
+  cache.put("bearer-token", token, 60); // cache for 6 hours
+  return token;
+  */
+  // because each instance of a 'Printer' will get a new token, we can likely assume the lifespan of the token will not
+  // expire before this instance is destroyed
+  return this.service.getAccessToken();
+}
+
+Printer.prototype.getPrinterList = function() {
   var response = UrlFetchApp.fetch('https://www.google.com/cloudprint/search', {
     headers: {
-      Authorization: 'Bearer ' + getOAuthToken()
+      Authorization: 'Bearer ' + this.OauthToken()
     },
     muteHttpExceptions: true
   }).getContentText();
 
-  var printers = JSON.parse(response).printers;
+  try {
+    var printers = JSON.parse(response).printers;
+  } catch (e) {
+    Browser.msgBox(e);
+    return [];
+  }
 
   for (var p in printers) {
     Logger.log("%s %s %s", printers[p].id, printers[p].name, printers[p].description);
@@ -78,7 +75,43 @@ function getPrinterList() {
   return printers;
 }
 
-function printGoogleDocument(docID, printerID, docName) {
+
+Printer.prototype.PrintFileUrl = function(filename_url) {
+  // verify filename exists and we have access to it
+  var file = null;
+  try {
+    Logger.log(filename_url);
+    file = DocumentApp.openByUrl(filename_url);
+  } catch (e) {
+    Logger.log(e);
+    // TODO: sometimes it's unable to open the URL, but if we pass the ID it will succeed...
+    return this.PrintFileId(this.IdFromUrl(filename_url));
+  }
+  return this.PrintGoogleDocument(file.getId(), file.getName());
+}
+
+Printer.prototype.IdFromUrl = function(str) {
+  try {
+    return str.substr(str.indexOf('id=')+3);
+  } catch (e) {
+    Logger.log(e);
+  }
+  return null;
+}
+
+Printer.prototype.PrintFileId = function(fileId) {
+  var file = null;
+  try {
+    file = DocumentApp.openById(fileId);
+  } catch (e) {
+    Logger.log('Unable to locate ID: ' + fileId);
+    Browser.msgBox(e);
+    return false;
+  }
+  return this.PrintGoogleDocument(file.getId(), file.getName());l
+}
+
+Printer.prototype.PrintGoogleDocument = function(docID, docName) {
   var ticket = {
     version: "1.0",
     print: {
@@ -94,29 +127,33 @@ function printGoogleDocument(docID, printerID, docName) {
 
   // https://stackoverflow.com/questions/30565554/oauth2-with-google-cloud-print
   var payload = {
-    "printerid" : printerID,
+    "printerid" : this.printerId,
     "title"     : docName,
     "content"   : docID,
     "contentType": "google.kix",
     "ticket"    : JSON.stringify(ticket)
   };
 
+  console.log('Attempting print for: "' + docName + '" to: ' + this.printerId)
   var response = UrlFetchApp.fetch('https://www.google.com/cloudprint/submit', {
     method: "POST",
     payload: payload,
     headers: {
-      Authorization: 'Bearer ' + getOAuthToken()
+      Authorization: 'Bearer ' + this.OauthToken()
     },
     "muteHttpExceptions": true
   });
 
-  response = JSON.parse(response);
-
-  if (response.success) {
-    Logger.log("%s", response.message);
-    return true;
-  } else {
-    Logger.log("Error Code: %s %s", response.errorCode, response.message);
-    return false;
+  try {
+    response = JSON.parse(response);
+    if (response.success) {
+      Logger.log("%s", response.message);
+      return true;
+    } else {
+      Browser.msgBox("Error Code: %s %s", response.errorCode, response.message);
+      return false;
+    }
+  } catch (e) {
+    Logger.log(e);
   }
 }

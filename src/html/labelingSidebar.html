@@ -90,7 +90,7 @@
 
   //TODO: should wait until document is "ready"?
   // get a list of available printers
-  google.script.run.withSuccessHandler(printersAvailable).getPrinterList();
+  google.script.run.withSuccessHandler(printersAvailable).showPrinters(true);
 
   function printersAvailable(arg) {
   console.log(arg);

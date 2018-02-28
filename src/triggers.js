@@ -20,7 +20,6 @@ function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('CloudPrint')
     .addItem('Authorization URL', 'testPrinterAccess')
-    .addItem('Clear OAuth Cache', 'clearOAuthCache')
     .addItem('Show Printers', 'showPrinters')
     .addToUi();
 
@@ -62,6 +61,7 @@ function pullPaymentsOn() {
 function pullSquarePayments() {
   var worksheet = new Worksheet();
   var fmt = new FormatOrder();
+  var api = new squareAPI();
   var payments = api.pullPaymentsSince(new Date().toISOString());
   for (var i in payments) {
     //TODO: we don't have access to the location_id... will this still work if we use 'me'?
@@ -139,21 +139,22 @@ function notifySidebars() {
 }
 
 function testPrinterAccess() {
-  Browser.msgBox(showAuthorizationURL());
+  var printer = new Printer();
+  Browser.msgBox(printer.showAuthorizationURL());
 }
 
-function clearOAuthCache() {
-  clearPrinterOAuthCache();
-  Browser.msgBox('Cache Cleared!');
-}
-
-function showPrinters() {
-  var printers = getPrinterList();
-  var str_printers = '';
-  for (var p in printers) {
-    str_printers += printers[p].id + ' ' + printers[p].name + ' ' + printers[p].description + '\\n';
+function showPrinters(returnList) {
+  var printer = new Printer();
+  var printers = printer.getPrinterList();
+  if (returnList === undefined) {
+    var str_printers = '';
+    for (var p in printers) {
+      str_printers += printers[p].id + ' ' + printers[p].name + ' ' + printers[p].description + '\\n';
+    }
+    Browser.msgBox(str_printers);
+  } else if (returnList === true) {
+    return printers;
   }
-  Browser.msgBox(str_printers);
 }
 
 function printLabel(order_id, printer_id) {

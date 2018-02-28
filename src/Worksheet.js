@@ -117,7 +117,8 @@ Worksheet.prototype.printLabel = function(orderNumber, printerId, advanceState) 
   }
 
   //TODO: catch and raise exception
-  if (printLabelFromFile(order['Label Doc Link'], printerId) !== true) {
+  var printer = new Printer(printerId);
+  if (printer.PrintFileUrl(order['Label Doc Link']) !== true) {
     Browser.msgBox('Print was unsuccessful for order: ' + orderNumber);
     return false;
   }
