@@ -159,7 +159,7 @@ simulateSquare.prototype.PaymentItemization = function() {
     itemization_type: this.randomChoice(itemization_type),
     item_detail: this.PaymentItemDetail(),
     notes: 'Notes for ' + item,
-    item_variation_name: this.randomChoice(['ADULT', 'CHILD']),
+    item_variation_name: this.randomChoice(['Adult', 'Child', 'Regular']),
     total_money: this.Money(),
     single_quantity_money: this.Money(),
     gross_sales_money: this.Money(),

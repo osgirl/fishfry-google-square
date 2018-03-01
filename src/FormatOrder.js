@@ -94,26 +94,28 @@ FormatOrder.prototype.ConvertSquareToSheet = function(txnMetadata, orderDetails,
   orderDetails.itemizations.forEach( function (item) {
     //item.name will be for meals
     var key = item.name;
+    console.log("ConvertSquareToSheet: menuItem found: " + key);
     if (item.item_variation_name == "Child") {
       if (order.items[key].serving == 'MEAL') {
         key += ' (Child)';
       }
     }
     if (!(key in order.items)) {
-      Logger.log("unknown menu item found in Square Order: " + item);
+      console.log("unknown menu item found in Square Order: " + JSON.stringify(item));
     }
     order.items[key].increment_quantity(item.quantity);
 
     //sides are stored in "item modifiers"
     item.modifiers.forEach( function(modifier) {
       var side = modifier.name;
+      console.log("ConvertSquareToSheet: sideItem found: " + side);
 
       //Mac and Cheese can be both a side & a meal so we need a special case for it
       if (side == "Mac & Cheese") {
         side += ' (Side)';
       }
       if (!(side in order.items)) {
-        Logger.log("unknown side item found in Square Order: " + modifier);
+        console.log("unknown side item found in Square Order: " + JSON.stringify(modifier));
       }
       order.items[side].increment_quantity(item.quantity);
     });

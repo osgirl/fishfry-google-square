@@ -24,6 +24,9 @@ FormatLabel.prototype.formatLabelFromSquare = function(body, orderNumber, orderD
   var mealCount = 1;
   var font = 'Arial';
   orderDetails.itemizations.forEach( function(item) {
+    //need to skip soups
+    if (item.name == "Clam Chowder Soup")
+      return;
     // 26 characters at 14pt
     var line1 = body
       .appendParagraph(pad('    ', orderNumber.toString(), true)
@@ -44,12 +47,17 @@ FormatLabel.prototype.formatLabelFromSquare = function(body, orderNumber, orderD
       .setFontSize(11)
       .setAlignment(DocumentApp.HorizontalAlignment.RIGHT);
     // 33 characters at 11pt
+    var variationString = "";
+    if (item.item_variation_name !== "Regular") {
+      //if this is adult/child then print; otherwise skip
+      variationString = " (" + item.item_variation_name + ")  ";
+    }
+    console.log("formatLabelFromSquare: item: " + JSON.stringify(item));
     var line3 = body
       .appendParagraph(menu.items[item.name].abbr
-        + " (" + item.item_variation_name + ")"
-        + " "
-        + pad('  ', totalSoups.toString(), true)
-        + " Soup")
+        + variationString 
+        + pad(' ', totalSoups.toString(), true)
+        + " Soups")
       .setFontFamily(font)
       .setBold(true)
       .setFontSize(12)
