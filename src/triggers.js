@@ -11,7 +11,7 @@ function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('SquareUp')
     .addItem('Enable Pull Payments', 'pullPaymentsOn')
-    .addItem('Delete Pull Payments', 'pullPaymentsOff')
+    .addItem('Disable Pull Payments', 'pullPaymentsOff')
     .addItem('Register Webhook', 'registerWebhook')
     .addItem('Delete Webhook', 'deleteWebhooks')
     .addItem('Simulate New Order', 'simulateNewOrder')
@@ -24,15 +24,6 @@ function onOpen() {
     .addToUi();
 
   //TODO: validate/install triggers
-}
-
-/**
- * This trigger will fire when a human edits the spreadsheet contents. It does not fire when a method
- * within these scripts append a row to the spreadsheet.
- */
-function onEdit(e) {
-  //TOOD: scan for any rows that have Present but nothing in current wait time
-  //notifySidebars();
 }
 
 function pullPaymentsOff() {
@@ -117,26 +108,6 @@ function showClosingSidebar() {
   SpreadsheetApp.getUi().showSidebar(htmlOutput);
 }
 
-/**
- * This scans the transaction log, and sends updated subsets of data to the various sidebar views.
- */
-function notifySidebars() {
-  var worksheet = new Worksheet();
-  var allOrders = worksheet.worksheet.all();
-
-  var presentOrders = allOrders.filter(function (order) {
-    return order["Order State"] === "Present";
-  });
-
-  var labeledOrders = allOrders.filter(function (order) {
-    return order["Order State"] === "Labeled";
-  });
-
-  var readyOrders = allOrders.filter(function (order) {
-    return order["Order State"] === "Ready";
-  });
-
-}
 
 function testPrinterAccess() {
   var printer = new Printer();

@@ -72,7 +72,7 @@
       K of C 7186 Fish Fry: Google & Square
     </h3>
 
-    <h3 id="global-nav">Global</h3><ul><li><a href="global.html#convertISODate">convertISODate</a></li><li><a href="global.html#doPost">doPost</a></li><li><a href="global.html#notifySidebars">notifySidebars</a></li><li><a href="global.html#onEdit">onEdit</a></li></ul>
+    <h3 id="global-nav">Global</h3><ul><li><a href="global.html#convertISODate">convertISODate</a></li><li><a href="global.html#doPost">doPost</a></li><li><a href="global.html#loggedUrlFetch">loggedUrlFetch</a></li></ul>
   </nav>
 
   <div id="main">
@@ -113,14 +113,16 @@
  * https://docs.connect.squareup.com/api/connect/v1#setupwebhooks
  */
 function doPost(e) {  
-  Logger.log(e);
-  if (e.hasOwnProperty('postData') &amp;&amp; e.postData.type != "application/json")
-    throw "Invalid Input Type!"
+  console.log('doPost: received payload: ' + e);
+
+  if (e.hasOwnProperty('postData') &amp;&amp; e.postData.type != "application/json") {
+    var errMsg = "doPost: invalid input content type for payload";
+    console.error(errMsg);
+    throw errMsg;
+  }
   
   var input = JSON.parse(e.postData.contents);
-  
-  Logger.log("webhook: " + e.postData.contents);
-  console.log(e);
+  console.log("doPost: webhook contents: " + e.postData.contents);
   
   // PAYMENT_UPDATED will be sent regardless of creation or update
   if (input.event_type == 'PAYMENT_UPDATED'){
@@ -132,7 +134,8 @@ function doPost(e) {
   
   // return an HTTP 200 OK with no content for webhook request
   return HtmlService.createHtmlOutput("");
-}</code></pre>
+}
+</code></pre>
   </article>
 </section>
 
