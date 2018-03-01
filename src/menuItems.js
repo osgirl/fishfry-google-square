@@ -42,7 +42,7 @@ function menuItems() {
           serving: 'MEAL'
         }),
         'Fried Fish (Child)': new menuItem({
-          abbr: 'Fried Fish (c)',
+          abbr: 'Fried Fish',
           ingredients: [
             new menuItemIngredient('Fried Fish', 0.67)
           ],
@@ -56,7 +56,7 @@ function menuItems() {
           serving: 'MEAL'
         }),
         'Baked Fish (Child)': new menuItem({
-          abbr: 'Baked Fish (c)',
+          abbr: 'Baked Fish',
           ingredients: [
             new menuItemIngredient('Baked Fish', 0.67)
           ],
@@ -70,7 +70,7 @@ function menuItems() {
           serving: 'MEAL'
         }),
         'Fried Shrimp (Child)': new menuItem({
-          abbr: 'Fried Shrimp (c)',
+          abbr: 'Fried Shrimp',
           ingredients: [
             new menuItemIngredient('Fried Shrimp', 0.67)
           ],
@@ -84,7 +84,7 @@ function menuItems() {
           serving: 'MEAL'
         }),
         'Baked Shrimp (Child)': new menuItem({
-          abbr: 'Baked Shrimp (c)',
+          abbr: 'Baked Shrimp',
           ingredients: [
             new menuItemIngredient('Baked Shrimp', 0.67)
           ],
@@ -99,7 +99,7 @@ function menuItems() {
           serving: 'MEAL'
         }),
         'Baked Combo (Child)': new menuItem({
-          abbr: 'Baked Combo (c)',
+          abbr: 'Baked Combo',
           ingredients: [
             new menuItemIngredient('Baked Fish', 0.33),
             new menuItemIngredient('Baked Shrimp', 0.33)
@@ -115,7 +115,7 @@ function menuItems() {
           serving: 'MEAL'
         }),
         'Fried Combo (Child)': new menuItem({
-          abbr: 'Fried Combo (c)',
+          abbr: 'Fried Combo',
           ingredients: [
             new menuItemIngredient('Fried Fish', 0.33),
             new menuItemIngredient('Fried Shrimp', 0.33)
@@ -123,14 +123,14 @@ function menuItems() {
           serving: 'MEAL'
         }),
         'Mac & Cheese': new menuItem({
-          abbr: 'Mac & Cheese',
+          abbr: 'Mac&Cheese',
           ingredients: [
             new menuItemIngredient('Mac & Cheese', 1)
           ],
           serving: 'MEAL'
         }),
         'Grilled Cheese': new menuItem({
-          abbr: 'Grilled Cheese',
+          abbr: 'Gr. Cheese',
           ingredients: [
             new menuItemIngredient('Grilled Cheese', 1)
           ],
@@ -144,7 +144,7 @@ function menuItems() {
           serving: 'SOUP'
         }),
         'French Fries': new menuItem({
-          abbr: 'FF',
+          abbr: 'Fries',
           ingredients: [
             new menuItemIngredient('French Fries', 1)
           ],
@@ -158,7 +158,7 @@ function menuItems() {
           serving: 'SIDE'
         }),
         'Mac & Cheese (Side)': new menuItem({
-          abbr: 'Mac & Cheese',
+          abbr: 'Mac&Chz',
           ingredients: [
             new menuItemIngredient('Mac & Cheese', 0.5)
           ],
