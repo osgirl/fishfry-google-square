@@ -15,7 +15,7 @@ FormatOrder.prototype.getOrderNumberAtomic = function() {
   // get global lock before fetching property
   var lock = LockService.getDocumentLock();
   while (!lock.tryLock(1000)) {
-    Logger.log('failed to get lock, trying again');
+    console.log ('getOrderNumberAtomic: failed getting lock, trying again');
   }
   // we have the lock if we've gotten this far
   var next = null;
@@ -33,7 +33,7 @@ FormatOrder.prototype.getOrderNumberAtomic = function() {
     props.setProperty('atomicOrderNumber', next);
   }
   catch (e) {
-    Logger.log(e);
+    console.error('getOrderNumberAtomic: Exception in setting/incrementing atomic order integer: ' + e);
   }
   finally {
     lock.releaseLock();
@@ -41,7 +41,9 @@ FormatOrder.prototype.getOrderNumberAtomic = function() {
 
   if (next === null) {
     // TODO: should this have a backup method when this condition happens?
-    throw "Unable to acquire next order number!"
+    var errMsg = "getOrderNumberAtomic: Unable to acquire next order number!"
+    console.error(errMsg);
+    throw errMsg;
   }
 
   return next;
@@ -65,7 +67,9 @@ FormatOrder.prototype.getStateFromOrigin = function (origin){
       return "Paid Online";
       break;
     default:
-      throw "Unknown origin (" + origin + ") of transaction!";
+      var errMsg = "getStateFromOrigin: Unknown origin (" + origin + ") of transaction!";
+      console.error(errMsg);
+      throw errMsg;
   }
 }
 
@@ -101,7 +105,7 @@ FormatOrder.prototype.ConvertSquareToSheet = function(txnMetadata, orderDetails,
       }
     }
     if (!(key in order.items)) {
-      console.log("unknown menu item found in Square Order: " + JSON.stringify(item));
+      console.log("ConvertSquareToSheet: unknown menu item found in Square Order: " + JSON.stringify(item));
     }
     order.items[key].increment_quantity(item.quantity);
 

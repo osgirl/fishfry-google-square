@@ -65,7 +65,7 @@ Worksheet.prototype.upsertTransaction = function (proposedOrder) {
 
 Worksheet.prototype.updateWaitTimeFormulas = function (rowIndex) {
   if (rowIndex < 0) {
-    Logger.log('Invalid rowIndex: ' + rowIndex);
+    console.error('updateWaitTimeFormulas: Invalid rowIndex: ' + rowIndex);
     return;
   }
   // find the column letters that represents "current wait time", "order state", "time present"
@@ -100,12 +100,14 @@ Worksheet.prototype.printLabel = function(orderNumber, printerId, advanceState) 
 
   var rowIndex = this.searchForTransaction('Order Number', parseInt(orderNumber));
   if (rowIndex == -1) {
-    Browser.msgBox("Unable to locate Order Number: " + orderNumber);
+    var errMsg = "printLabel: Unable to locate Order Number: " + orderNumber;
+    console.error(errMsg);
+    Browser.msgBox(errMsg);
     return false;
   }
 
   var order = this.worksheet.getRowAsObject(rowIndex);
-  Logger.log(JSON.stringify(order));
+  console.log("printLabel: order data from sheet: " + JSON.stringify(order));
 
   // retrieve filename from row
   if (order['Label Doc Link'] == "") {
@@ -119,7 +121,9 @@ Worksheet.prototype.printLabel = function(orderNumber, printerId, advanceState) 
   //TODO: catch and raise exception
   var printer = new Printer(printerId);
   if (printer.PrintFileUrl(order['Label Doc Link']) !== true) {
-    Browser.msgBox('Print was unsuccessful for order: ' + orderNumber);
+    var errMsg = 'printLabel: Print was unsuccessful for order: ' + orderNumber;
+    console.error(errMsg);
+    Browser.msgBox(errMsg);
     return false;
   }
 
@@ -133,7 +137,9 @@ Worksheet.prototype.setState = function(orderNumber, newState) {
   var column = 'Order State';
   var rowIndex = this.searchForTransaction('Order Number', parseInt(orderNumber));
   if (rowIndex == -1) {
-    Browser.msgBox("Unable to locate Order Number: " + orderNumber);
+    var errMsg = "setState: Unable to locate Order Number: " + orderNumber;
+    console.error(errMsg);
+    Browser.msgBox(errMsg);
     return false;
   }
 
@@ -145,7 +151,6 @@ Worksheet.prototype.setState = function(orderNumber, newState) {
   var timeCell = this.worksheet.getColumnLetter('Time ' + newState);
   if (timeCell !== "") {
     this.worksheet.worksheet.getRange(timeCell+rowIndex).setValue(convertISODate(new Date()));
-    //Logger.log('State: ' + newState + ' is not a column in the spreadsheet .. but probably should be?')
   }
   return newState;
 }
@@ -153,11 +158,15 @@ Worksheet.prototype.setState = function(orderNumber, newState) {
 Worksheet.prototype.validateAndAdvanceState = function(orderNumber, fromState) {
   var rowIndex = this.searchForTransaction('Order Number', parseInt(orderNumber));
   if (rowIndex == -1) {
-    Browser.msgBox("Unable to locate Order Number: " + orderNumber);
+    var errMsg = "validateAndAdvanceState: Unable to locate Order Number: " + orderNumber;
+    console.error(errMsg);
+    Browser.msgBox(errMsg);
     return -1;
   }
   if (this.order_states.indexOf(fromState) == -1){
-    Browser.msgBox("State '"+fromState+" not found in state machine!");
+    var errMsg = "validateAndAdvanceState: State '"+fromState+"' not found in state machine!";
+    console.error(errMsg);
+    Browser.msgBox(errMsg);
     return -1;
   }
 
@@ -168,7 +177,9 @@ Worksheet.prototype.validateAndAdvanceState = function(orderNumber, fromState) {
   var stateIndex = this.order_states.indexOf(current_state);
 
   if (stateIndex == this.order_states.length - 1) {
-    Browser.msgBox("Order: " + orderNumber + " is already at the end of the State Machine!");
+    var errMsg = "validateAndAdvanceState: Order " + orderNumber + " is already at the end of the State Machine!";
+    console.error(errMsg);
+    Browser.msgBox(errMsg);
     return -1;
   }
 
@@ -176,7 +187,9 @@ Worksheet.prototype.validateAndAdvanceState = function(orderNumber, fromState) {
   var new_state = this.order_states[stateIndex + 1];
   var desired_new_state = this.order_states.indexOf(fromState) + 1;
   if (new_state != this.order_states[desired_new_state]){
-    Browser.msgBox("Order " + orderNumber + " cannot transition to " + this.order_states[desired_new_state] + ' from ' + current_state);
+    var errMsg = "validateAndAdvanceState: Order " + orderNumber + " cannot transition to " + this.order_states[desired_new_state] + ' from ' + current_state;
+    console.error(errMsg);
+    Browser.msgBox(errMsg);
     return -1;
   }
 
@@ -185,7 +198,10 @@ Worksheet.prototype.validateAndAdvanceState = function(orderNumber, fromState) {
 
   // test to make sure field is in spreadsheet
   if (!order.hasOwnProperty('Time ' + new_state)) {
-    Logger.log('State: ' + new_state + ' is not a column in the spreadsheet .. but probably should be?');
+    var errMsg = 'validateAndAdvanceState: State: ' + new_state + ' is not a column in the spreadsheet .. but probably should be?';
+    console.error(errMsg);
+    Browser.msgBox(errMsg);
+    return -1;
   } else {
     // update state time in object only if it's a valid column
     order['Time ' + new_state] = convertISODate(new Date());

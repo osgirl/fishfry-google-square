@@ -10,7 +10,10 @@ function constructSquareURL(baseURL){
 function getWebhooksForToken() {
   //TODO: replace with square webhook url
   var url = "https://trello.com/1/token/" + ScriptProperties.getProperty("token") + "/webhooks?key="+ScriptProperties.getProperty("appKey");
-  var resp = UrlFetchApp.fetch(url, {"method": "get"});
+  var resp = loggedUrlFetch(url, {"method": "get"});
+  if (isEmpty(resp)) {
+    throw "failed to get webhooks for token";
+  }
   return webhooks = Utilities.jsonParse(resp.getContentText());
 }
 
@@ -24,7 +27,12 @@ function registerWebhook() {
   //TODO: replace with square webhook url
   var error = checkControlValues(false,true);
   var squareUrl = constructSquareURL("webhooks/?callbackURL=" + encodeURIComponent(url) + "&idModel="+ScriptProperties.getProperty("boardId").trim());
-  var resp = UrlFetchApp.fetch(squareUrl, {"method": "post","muteHttpExceptions":true});
+  var resp = loggedUrlFetch(squareUrl, {"method": "post","muteHttpExceptions":true});
+
+  if (isEmpty(resp)){
+    Browser.msgbox("failed to create webhook");
+    return;
+  }
 
   if (resp.getResponseCode() == 200) {
     Browser.msgBox("Webhook successfully registered! PLEASE make sure you change the authorities on the script (See documentation) to allow the webhook callback to work.");
@@ -44,7 +52,12 @@ function deleteWebhooks() {
 
   for (var i =0; i < webhooks.length;i++) {
     var url = "https://trello.com/1/token/" + ScriptProperties.getProperty("token") + "/webhooks/" + webhooks[i].id + "?key="+ScriptProperties.getProperty("appKey");
-    var resp = UrlFetchApp.fetch(url, {"method": "delete"});
+    var resp = loggedUrlFetch(url, {"method": "delete"});
+
+    if (isEmpty(resp)){
+      Browser.msgbox("failed to delete webhook");
+      return;
+    }
     if (resp.getResponseCode() == 200) {
       deleteCount += 1;
     }
