@@ -55,7 +55,7 @@ FormatLabel.prototype.formatLabelFromSquare = function(body, orderNumber, orderD
     console.log("formatLabelFromSquare: item: " + JSON.stringify(item));
     var line3 = body
       .appendParagraph(menu.items[item.name].abbr
-        + variationString 
+        + variationString
         + pad(' ', totalSoups.toString(), true)
         + " Soups")
       .setFontFamily(font)
