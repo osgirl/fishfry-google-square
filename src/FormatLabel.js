@@ -24,6 +24,10 @@ FormatLabel.prototype.formatLabelFromSquare = function(body, orderNumber, orderD
   var mealCount = 1;
   var font = 'Arial';
   orderDetails.itemizations.forEach( function(item) {
+    //need to skip soups
+    if (item.name == "Clam Chowder Soup")
+      return;
+
     // 26 characters at 14pt
     var line1 = body
       .appendParagraph(pad('    ', orderNumber.toString(), true)
@@ -36,6 +40,7 @@ FormatLabel.prototype.formatLabelFromSquare = function(body, orderNumber, orderD
       .setBold(true)
       .setFontSize(14)
       .setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+
     // 37 characters at 10pt
     var line2 = body
       .appendParagraph(customerName)
@@ -44,23 +49,37 @@ FormatLabel.prototype.formatLabelFromSquare = function(body, orderNumber, orderD
       .setFontSize(11)
       .setAlignment(DocumentApp.HorizontalAlignment.RIGHT);
     // 33 characters at 11pt
+
+    var variationString = "";
+    if (item.item_variation_name !== "Regular") {
+      //if this is adult/child then print; otherwise skip
+      variationString = " (" + item.item_variation_name + ")  ";
+    }
+    var soupsString = "";
+    if (totalSoups > 0) {
+      soupsString = pad(' ', totalSoups.toString(), true) + " Soups";
+    }
     var line3 = body
       .appendParagraph(menu.items[item.name].abbr
-        + " (" + item.item_variation_name + ")"
-        + " "
-        + pad('  ', totalSoups.toString(), true)
-        + " Soup")
+        + variationString
+        + soupsString)
       .setFontFamily(font)
       .setBold(true)
       .setFontSize(12)
       .setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+
     // 33 characters at 11pt
+    var sideItemName = item.modifiers[0].name;
+    if (sideItemName == "Mac & Cheese")
+      sideItemName += " (Side)";
+
     var line4 = body
-      .appendParagraph(item.modifiers[0].name)
+      .appendParagraph(menu.items[sideItemName].abbr)
       .setFontFamily(font)
       .setBold(true)
       .setFontSize(12)
       .setAlignment(DocumentApp.HorizontalAlignment.LEFT);
+
     // 37 characters at 10pt
     var line5 = body
       .appendParagraph(txnMetadata.note)

@@ -1,11 +1,11 @@
 function menuItems() {
     this.ingredients = [
-        'Hand Breaded Fish',
+        'Fried Fish',
         'Baked Fish',
-        'Hand Breaded Shrimp',
+        'Fried Shrimp',
         'Baked Shrimp',
-        'Combo Baked Fish & Shrimp',
-        'Combo Hand Breaded Fish & Shrimp',
+        'Baked Combo',
+        'Fried Combo',
         'Clam Chowder Soup',
         'Mac & Cheese',
         'Grilled Cheese',
@@ -13,17 +13,17 @@ function menuItems() {
         'Red Potato'
     ];
     this.meals = [
-        'Hand Breaded Fish',
+        'Fried Fish',
         'Baked Fish',
-        'Hand Breaded Shrimp',
+        'Fried Shrimp',
         'Baked Shrimp',
-        'Combo Baked Fish & Shrimp',
-        'Combo Hand Breaded Fish & Shrimp',
+        'Baked Combo',
+        'Fried Combo',
+        'Grilled Cheese',
         'Mac & Cheese'
     ];
     this.sides = [
         'Mac & Cheese',
-        'Grilled Cheese',
         'French Fries',
         'Red Potato'
     ];
@@ -34,17 +34,17 @@ function menuItems() {
     ];
     // TODO: get menu items from Square
     this.items = {
-        'Hand Breaded Fish': new menuItem({
+        'Fried Fish': new menuItem({
           abbr: 'Fried Fish',
           ingredients: [
             new menuItemIngredient('Fried Fish', 1)
           ],
           serving: 'MEAL'
         }),
-        'Hand Breaded Fish (Child)': new menuItem({
-          abbr: 'Fried Fish (c)',
+        'Fried Fish (Child)': new menuItem({
+          abbr: 'Fried Fish',
           ingredients: [
-            new menuItemIngredient('Fried Fish', 0.5)
+            new menuItemIngredient('Fried Fish', 0.67)
           ],
           serving: 'MEAL'
         }),
@@ -58,21 +58,21 @@ function menuItems() {
         'Baked Fish (Child)': new menuItem({
           abbr: 'Baked Fish',
           ingredients: [
-            new menuItemIngredient('Baked Fish', 0.5)
+            new menuItemIngredient('Baked Fish', 0.67)
           ],
           serving: 'MEAL'
         }),
-        'Hand Breaded Shrimp': new menuItem({
+        'Fried Shrimp': new menuItem({
           abbr: 'Fried Shrimp',
           ingredients: [
             new menuItemIngredient('Fried Shrimp', 1)
           ],
           serving: 'MEAL'
         }),
-        'Hand Breaded Shrimp (Child)': new menuItem({
+        'Fried Shrimp (Child)': new menuItem({
           abbr: 'Fried Shrimp',
           ingredients: [
-            new menuItemIngredient('Fried Shrimp', 0.5)
+            new menuItemIngredient('Fried Shrimp', 0.67)
           ],
           serving: 'MEAL'
         }),
@@ -86,27 +86,27 @@ function menuItems() {
         'Baked Shrimp (Child)': new menuItem({
           abbr: 'Baked Shrimp',
           ingredients: [
-            new menuItemIngredient('Baked Shrimp', 0.5)
+            new menuItemIngredient('Baked Shrimp', 0.67)
           ],
           serving: 'MEAL'
         }),
-        'Combo Baked Fish & Shrimp': new menuItem({
-          abbr: 'Bakedombo',
+        'Baked Combo': new menuItem({
+          abbr: 'Baked Combo',
           ingredients: [
             new menuItemIngredient('Baked Fish', 0.5),
             new menuItemIngredient('Baked Shrimp', 0.5)
           ],
           serving: 'MEAL'
         }),
-        'Combo Baked Fish & Shrimp (Child)': new menuItem({
+        'Baked Combo (Child)': new menuItem({
           abbr: 'Baked Combo',
           ingredients: [
-            new menuItemIngredient('Baked Fish', 0.25),
-            new menuItemIngredient('Baked Shrimp', 0.25)
+            new menuItemIngredient('Baked Fish', 0.33),
+            new menuItemIngredient('Baked Shrimp', 0.33)
           ],
           serving: 'MEAL'
         }),
-        'Combo Hand Breaded Fish & Shrimp': new menuItem({
+        'Fried Combo': new menuItem({
           abbr: 'Fried Combo',
           ingredients: [
             new menuItemIngredient('Fried Fish', 0.5),
@@ -114,26 +114,27 @@ function menuItems() {
           ],
           serving: 'MEAL'
         }),
-        'Combo Hand Breaded Fish & Shrimp (Child)': new menuItem({
+        'Fried Combo (Child)': new menuItem({
           abbr: 'Fried Combo',
           ingredients: [
-            new menuItemIngredient('Fried Fish', 0.25),
-            new menuItemIngredient('Fried Shrimp', 0.25)
+            new menuItemIngredient('Fried Fish', 0.33),
+            new menuItemIngredient('Fried Shrimp', 0.33)
           ],
           serving: 'MEAL'
         }),
         'Mac & Cheese': new menuItem({
-          abbr: 'Mac & Cheese',
+          abbr: 'Mac&Cheese',
           ingredients: [
             new menuItemIngredient('Mac & Cheese', 1)
           ],
           serving: 'MEAL'
         }),
         'Grilled Cheese': new menuItem({
+          abbr: 'Gr. Cheese',
           ingredients: [
             new menuItemIngredient('Grilled Cheese', 1)
           ],
-          serving: 'SIDE'
+          serving: 'MEAL'
         }),
         'Clam Chowder Soup': new menuItem({
           abbr: 'Soup',
@@ -143,7 +144,7 @@ function menuItems() {
           serving: 'SOUP'
         }),
         'French Fries': new menuItem({
-          abbr: 'FF',
+          abbr: 'Fries',
           ingredients: [
             new menuItemIngredient('French Fries', 1)
           ],
@@ -153,6 +154,13 @@ function menuItems() {
           abbr: 'Potato',
           ingredients: [
             new menuItemIngredient('Red Potato', 1)
+          ],
+          serving: 'SIDE'
+        }),
+        'Mac & Cheese (Side)': new menuItem({
+          abbr: 'Mac&Chz',
+          ingredients: [
+            new menuItemIngredient('Mac & Cheese', 0.5)
           ],
           serving: 'SIDE'
         })
