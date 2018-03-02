@@ -215,3 +215,59 @@ Worksheet.prototype.validateAndAdvanceState = function(orderNumber, fromState) {
 
   return rowIndex;
 }
+
+/**
+ * This method extracts the note field for a given online order, and sets the cell in
+ * the spreadsheet that will store the note across all meals, so that the message shows
+ * up on every label that is printed.
+ *
+ * The input data to this method should be an array of Objects, that looks like this:
+ *
+ * [{'Order Placed At': '2018-02-22 14:30:46 EST',
+ *   'Receipt Number': 'PXp3',
+ *   'Order Description': 'Clam Chowder Soup (Regular)',
+ *   'Fulfillment Type': 'ELECTRONIC',
+ *   'Order State': 'COMPLETED',
+ *   'Pickup At': '',
+ *   'Pickup Time Window': '',
+ *   'Subtotal': '$3.50',
+ *   'Tax': '$0.00',
+ *   'Shipping': '$0.00',
+ *   'Total': '$3.50',
+ *   ...
+ *   'Shipping Address': '',
+ *   'CC Brand': 'VISA',
+ *   'Note': 'test note to merchant' }
+ */
+Worksheet.prototype.updateNotesForOnlineOrders = function(onlineOrderData) {
+  //fetch once for faster iteration
+  var allOrders = this.worksheet.all();
+
+  onlineOrderData.forEach( function(onlineOrder) {
+    var match = allOrders.filter(function(sheetOrder) {
+      //search based on receipt number && total amount to match as data does not
+      //provide the entire payment ID, just the first four characters
+      //also need to strip the $ character off of the onlineOrder Total value
+      return (sheetOrder['Payment ID'].startsWith(onlineOrder['Receipt Number']) &&
+              sheetOrder['Total Amount'] == onlineOrder['Total'].substring(1));
+    });
+
+    //match should be an array of size 1, but if we don't find it then just return
+    if (match.length == 0){
+      console.log('updateNotesForOnlineOrders: did not find matches for ' + onlineOrder['Receipt Number']);
+      return;
+    }
+    else if (match.length > 1){
+      console.error('updateNotesForOnlineOrders: found multiple matches for ' + onlineOrder['Receipt Number']);
+      return;
+    }
+
+    var notes = new Array(parseInt(match[0]['Total Meals']));
+    //set a note for each meal to be a copy of the online order note.
+    notes.map(function() { return onlineOrder['Note']; });
+
+    var rowIndex = this.worksheet.rowIndex('Payment ID',match[0]['Payment ID']);
+
+    this.worksheet.updateCell(rowIndex,'Note on Order',JSON.stringify(notes));
+  });
+}

@@ -13,6 +13,8 @@ if (process.argv.length !== 4) {
 //parse input
 var parser = csv.parse({columns:true}, function(err, data){
 
+  //console.log(data);
+
   var url = new URL(process.argv[3]);
   //put queryParam of 'uploadOnlineOrderData' on url
   if (url.searchParams.get('uploadOnlineOrder') == null) {
