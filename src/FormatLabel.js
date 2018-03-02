@@ -19,6 +19,36 @@ FormatLabel.prototype.newLabelTemplate = function(filename) {
   return editableLabelDoc;
 }
 
+
+/*
+ * *** Cloud Print Setup Notes ***
+ * The following formatting is based on the Dymo Labelwriter 450 and 450 Turbo label printers using the 30336 (1" x 2-1/8") labels  
+ * using Goolge Cloud Print.  Note that on the printer side, the print connector was set up using: https://github.com/google/cloud-print-connector
+ * and then configuring the default label/paper size (in BOTH places) using the instructions:
+ * https://help.shipstation.com/hc/en-us/articles/216103878-How-do-I-adjust-my-DYMO-LabelWriter-4XL-paper-size-Windows-
+ * This allowed printing WITHOUT any particular cloud print CDD.
+ * For Google Cloud Print to work from the school:
+ *  - Open ports 80 and 443 outbound to allow HTTP and HTTPS traffic (nothing required, typically)
+ *  - Open port 5222 outbound to allow XMPP message traffic
+ * Cloud print printer status:  https://www.google.com/cloudprint/#printers  (will show offline and the Cloud print service will stay Starting with errors if firewall issue)
+ * Printer Oauth setup notes:  
+ * - https://ctrlq.org/code/20061-google-cloud-print-with-apps-script
+ * - If necessary, register the tasks api: https://developers.google.com/google-apps/tasks/firstapp#register
+ * - Register oauth2 in the script: https://github.com/googlesamples/apps-script-oauth2
+ * - run that showURL() function, on the console (command-Enter) it would give a URL
+ * - entered URL in the browser it would fails saying that URL xyz wasn't allowed. 
+ * - then go into the API credentials page https://console.developers.google.com/apis/credentials and for that project & creat a web client credential where the 
+ *   Authorized Redirect URI matches the one that was mentioned in the earlier message. Then it let me select the google account and complete the authorization.
+ *
+ * Notes:
+ * - Arial was chosed after poor print quality with Courier/Courier New
+ *
+ * *** Printer Template Notes ***
+ * - Must be created in Word to be the correct size, then opened in GDocs to convert it to a Doc.
+ * - Nothing fancy, other than that the very first line in the template is just a blank line with 1-point (or very small) font.  There's no way to create/convert a  Word doc
+ *   without something; and to be able to just appendParagraph straight away we have a template with the smallest possible line.  
+ */
+
 FormatLabel.prototype.formatLabelFromSquare = function(body, orderNumber, orderDetails, txnMetadata, customerName, totalMeals, totalSoups) {
   var menu = new menuItems();
   var mealCount = 1;
