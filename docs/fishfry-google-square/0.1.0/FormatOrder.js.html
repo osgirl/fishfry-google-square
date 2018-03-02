@@ -177,6 +177,10 @@ FormatOrder.prototype.SquareTransactionToSheet = function (location_id, payment_
   // try to get updated order details from Square
   var orderDetails = this.api.OrderDetails(location_id, payment_id);
   var txnMetadata = this.api.TransactionMetadata(location_id, payment_id, orderDetails.created_at);
+  while (txnMetadata.customer_id == undefined){
+    console.log("SquareTransactionToSheet: didnt find customer name, trying again");
+    txnMetadata = this.api.TransactionMetadata(location_id, payment_id, orderDetails.created_at);
+  }
   var lastName = this.api.CustomerFamilyName(txnMetadata.customer_id);
   return this.ConvertSquareToSheet(txnMetadata, orderDetails, lastName);
 }

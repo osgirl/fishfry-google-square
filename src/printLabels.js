@@ -150,8 +150,13 @@ Printer.prototype.PrintGoogleDocument = function(docID, docName) {
   });
   // test if response is empty
   try {
-    response = JSON.parse(response);
-    if (response.success) {
+    if (isEmpty(response)){
+      var errMsg = "PrintGoogleDocument: Error in invoking GCP API";
+      console.error(errMsg);
+      Browser.msgBox(errMsg);
+      return false;
+    }
+    else if (response.success) {
       console.log("PrintGoogleDocument: response message: %s", response.message);
       return true;
     } else {
