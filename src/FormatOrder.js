@@ -93,10 +93,10 @@ FormatOrder.prototype.SquareTransactionToSheet = function (location_id, payment_
     txnMetadata = this.api.TransactionMetadata(location_id, payment_id, orderDetails.created_at);
   }
   var lastName = this.api.CustomerFamilyName(txnMetadata.customer_id);
-  return this.ConvertSquareToSheet(txnMetadata, orderDetails, lastName);
+  return this.ConvertSquareToSheet(location_id, txnMetadata, orderDetails, lastName);
 }
 
-FormatOrder.prototype.ConvertSquareToSheet = function(txnMetadata, orderDetails, lastName) {
+FormatOrder.prototype.ConvertSquareToSheet = function(location_id, txnMetadata, orderDetails, lastName) {
   // convert Square schema to Sheet schema
   var order = new menuItems();
   orderDetails.itemizations.forEach( function (item) {
@@ -135,6 +135,7 @@ FormatOrder.prototype.ConvertSquareToSheet = function(txnMetadata, orderDetails,
   var soupCount = order.servingCount('SOUP');
   var orderNumber = this.getOrderNumberAtomic();
   var fmtLabel = new FormatLabel();
+  var notes = createNoteString(location_id, orderDetails);
 
   // format data for Sheet
   var result = {
@@ -142,10 +143,10 @@ FormatOrder.prototype.ConvertSquareToSheet = function(txnMetadata, orderDetails,
     "Payment ID": orderDetails.id,
     "Total Amount": parseInt(orderDetails.total_collected_money.amount)/100,
     "Order Received Date/Time": convertISODate(new Date(orderDetails.created_at)),
-    "Last Name": lastName, //TODO: timing issue around fetching this prematurely?
+    "Last Name": lastName,
     "Expedite": "No",
-    "Note on Order": txnMetadata.note,//TODO: not sure this is the correct field
-    "Label Doc Link": fmtLabel.createLabelFile(orderNumber, orderDetails, txnMetadata, lastName, mealCount, soupCount),
+    "Note on Order": notes,
+    "Label Doc Link": fmtLabel.createLabelFile(orderNumber, orderDetails, lastName, JSON.parse(notes), mealCount, soupCount),
     "Order Venue": (this.getStateFromOrigin(txnMetadata.origin) == "Present") ? "In Person" : "Online",
     "Order State": this.getStateFromOrigin(txnMetadata.origin),
     "Square Receipt Link": orderDetails.receipt_url,
@@ -165,4 +166,30 @@ FormatOrder.prototype.ConvertSquareToSheet = function(txnMetadata, orderDetails,
   }
 
   return result;
+}
+
+FormatOrder.prototype.createNoteString = function(location_id, orderDetails) {
+
+  var descriptions = [];
+  //query catalog for current item descriptions
+  var itemCatalog = this.api.itemCatalog(location_id);
+
+  //if item catalog is empty, then we will print all values to labels
+  itemCatalog.forEach( function (item) {
+    //only store unique descriptions
+    if (!(item.description in descriptions)) {
+      descriptions.append(item.description);
+    }
+  });
+
+  var notes = [];
+  orderDetails.itemizations.forEach( function (item) {
+    //if there's no note or its simply a copy of the known descriptions, put nothing
+    if (item.notes == undefined || item.notes in descriptions)
+      notes.append('');
+    else //copy the value for this meal into the array
+      notes.append(item.notes);
+  });
+
+  return JSON.stringify(notes);
 }

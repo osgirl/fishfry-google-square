@@ -269,5 +269,7 @@ Worksheet.prototype.updateNotesForOnlineOrders = function(onlineOrderData) {
     var rowIndex = this.worksheet.rowIndex('Payment ID',match[0]['Payment ID']);
 
     this.worksheet.updateCell(rowIndex,'Note on Order',JSON.stringify(notes));
+
+    //TODO: need to regenerate label doc for this cell now
   });
 }

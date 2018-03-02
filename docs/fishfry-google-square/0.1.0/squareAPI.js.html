@@ -232,6 +232,22 @@ squareAPI.prototype.pullPaymentsSince = function(sinceX) {
   return this.call(url);
 }
 
+/**
+ * Retrieves current item descriptions from catalog.
+ *
+ * Assumes SQUARE_ACCESS_TOKEN for authentication is stored in Script Property of same name
+ *
+ * @param {string} location_id
+ *   Location ID corresponding to Square Location
+ * @returns {object} array of items in catalog for specified location
+ *   https://docs.connect.squareup.com/api/connect/v1#datatype-item
+ * @throws Will throw an error if the API call to Square is not successful for any reason
+ */
+squareAPI.prototype.itemCatalog = function(location_id){
+  var url = "https://connect.squareup.com/v1/" + location_id + "/items";
+  return this.call(url);
+}
+
 var api = squareAPI();
 </code></pre>
   </article>

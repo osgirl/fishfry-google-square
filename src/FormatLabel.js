@@ -19,7 +19,7 @@ FormatLabel.prototype.newLabelTemplate = function(filename) {
   return editableLabelDoc;
 }
 
-FormatLabel.prototype.formatLabelFromSquare = function(body, orderNumber, orderDetails, txnMetadata, customerName, totalMeals, totalSoups) {
+FormatLabel.prototype.formatLabelFromSquare = function(body, orderNumber, orderDetails, customerName, notes, totalMeals, totalSoups) {
   var menu = new menuItems();
   var mealCount = 1;
   var font = 'Arial';
@@ -83,7 +83,7 @@ FormatLabel.prototype.formatLabelFromSquare = function(body, orderNumber, orderD
 
       // 37 characters at 10pt
       var line5 = body
-        .appendParagraph(txnMetadata.note)
+        .appendParagraph(notes[mealCount - 1])
         .setFontFamily(font)
         .setBold(false)
         .setFontSize(10)
@@ -113,12 +113,12 @@ FormatLabel.prototype.formatLabelFromSheet = function(body, orderDetails) {
   return ['test body when not generated from square'];
 }
 
-FormatLabel.prototype.createLabelFile = function(orderNumber, orderDetails, txnMetadata, customerName, totalMeals, totalSoups) {
+FormatLabel.prototype.createLabelFile = function(orderNumber, orderDetails, customerName, notes, totalMeals, totalSoups) {
   var editableLabelDoc = this.newLabelTemplate("Order " + orderNumber + ": " + customerName);
   //for each meal, enter into label
 
   var body = editableLabelDoc.getBody().setText('');
-  this.formatLabelFromSquare(body, orderNumber, orderDetails, txnMetadata, customerName, totalMeals, totalSoups);
+  this.formatLabelFromSquare(body, orderNumber, orderDetails, customerName, notes, totalMeals, totalSoups);
   var url = editableLabelDoc.getUrl();
   editableLabelDoc.saveAndClose();
   return url;
