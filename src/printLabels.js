@@ -60,7 +60,7 @@ Printer.prototype.getPrinterList = function() {
       Authorization: 'Bearer ' + this.OauthToken()
     },
     muteHttpExceptions: true
-  }).getContentText();
+  });
 
   // test for empty response
   if (isEmpty(response)){
