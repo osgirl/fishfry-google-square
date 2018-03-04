@@ -33,7 +33,7 @@ function loggedUrlFetch(url, params) {
   try {
     console.log("loggedUrlFetch: invoking url " + url);
     var response = UrlFetchApp.fetch(url, params);
-    console.log("loggedUrlFetch: returned  " + response.getContentText());
+    console.log({message:"loggedUrlFetch: response", initialData: response});
     return JSON.parse(response.getContentText());
   } catch (e) {
     console.error("loggedUrlFetch: UrlFetchApp.fetch() returned error  " + e);

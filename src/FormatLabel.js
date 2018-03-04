@@ -128,13 +128,11 @@ FormatLabel.prototype.createLabelFile = function(orderNumber, orderDetails, cust
 /*
  * Create label from Sheet data
  */
-FormatLabel.prototype.createLabelFileFromSheet = function(orderSheetData, location_id) {
-  if (location_id === undefined || isEmpty(locationId))
-     location_id  = this.api.default_location_id;
+FormatLabel.prototype.createLabelFileFromSheet = function(orderSheetData) {
   //As Order Number and Last name should be globally unique, this should make it easy to find in the Drive folder
   var editableLabelDoc = this.newLabelTemplate("Order " + orderSheetData['Order Number'] + ": " + orderSheetData['Last Name']);
   var body = editableLabelDoc.getBody().setText('');
-  var squareOrderDetails = this.api.OrderDetails(location_id, orderSheetData['Payment ID']);
+  var squareOrderDetails = this.api.OrderDetails(orderSheetData['Payment ID']);
   this.formatLabelFromSquare(body, orderSheetData['Order Number'], squareOrderDetails, orderSheetData['Last Name'], JSON.parse(orderSheetData['Note on Order']), parseInt(orderSheetData['Total Meals']), parseInt(orderSheetData['Total Soups']));
   var url = editableLabelDoc.getUrl();
   editableLabelDoc.saveAndClose();

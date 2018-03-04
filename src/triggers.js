@@ -28,12 +28,12 @@ function onOpen() {
 // this must be an installed trigger as simple triggers do not have external permissions
 function onEditInstalled(e){
   var editedRange = e.range;
-  
+
   // skip if edits are made on any other sheet other than the transaction log
   if (editedRange.getSheet().getName() !== "Current Event Transaction Log"){
     return;
   }
-  
+
   // if its a large edit, log and skip
   if ((editedRange.getNumRows() > 1) || (editedRange.getNumColumns() > 1)){
     Browser.msgBox("onEdit: trigger cannot handle this large of an edit!");
@@ -41,23 +41,22 @@ function onEditInstalled(e){
     return;
   }
   else {
-    var cell = editedRange.getA1Notation();  
+    var cell = editedRange.getA1Notation();
     var column   = cell.replace(/[^a-zA-Z]/gi,'');
     var rowIndex = cell.replace(/[a-zA-Z]/gi,'');
-    
-    //this fails because of permissions issues. 
+
     var worksheet = new ManagedWorksheet(editedRange.getSheet().getParent(), editedRange.getSheet().getName());
-       
+
     // if edit is in last name, or note - regenerate label doc
     if ((worksheet.getColumnLetter("Last Name") == column) ||
         (worksheet.getColumnLetter("Note on Order") == column)) {
       var orderDetails = worksheet.getRowAsObject(rowIndex);
       console.log("onEdit: received update for " + cell + "; regenerating label doc");
-      
+
       var formatLabel = new FormatLabel();
       var url = formatLabel.createLabelFileFromSheet(orderDetails);
       console.log("onEdit: new label doc for " + cell + ": " + url);
-      
+
       worksheet.updateCell(rowIndex, 'Label Doc Link', url);
     }
   }

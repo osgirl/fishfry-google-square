@@ -86,7 +86,7 @@ FormatOrder.prototype.getStateFromOrigin = function (origin){
 //Order.prototype.upsertTransactionLog = function (location_id, payment_id){
 FormatOrder.prototype.SquareTransactionToSheet = function (location_id, payment_id) {
   // try to get updated order details from Square
-  var orderDetails = this.api.OrderDetails(location_id, payment_id);
+  var orderDetails = this.api.OrderDetails(payment_id);
   var txnMetadata = this.api.TransactionMetadata(location_id, payment_id, orderDetails.created_at);
   var sleepTimer = 1000;
   while (txnMetadata.customer_id == undefined && sleepTimer <= 16000){
@@ -142,7 +142,7 @@ FormatOrder.prototype.ConvertSquareToSheet = function(location_id, txnMetadata, 
   var soupCount = order.servingCount('SOUP');
   var orderNumber = this.getOrderNumberAtomic();
   var fmtLabel = new FormatLabel();
-  var notes = this.createNoteString(location_id, orderDetails);
+  var notes = this.createNoteString(orderDetails);
 
   // format data for Sheet
   var result = {
@@ -169,17 +169,17 @@ FormatOrder.prototype.ConvertSquareToSheet = function(location_id, txnMetadata, 
 
   if (result['Label Doc Link'] == '') {
     // attempt to create the label again, using the data from Sheet rather than
-    result['Label Doc Link'] = createLabelFileFromSheet(result, location_id);
+    result['Label Doc Link'] = createLabelFileFromSheet(result);
   }
 
   return result;
 }
 
-FormatOrder.prototype.createNoteString = function(location_id, orderDetails) {
+FormatOrder.prototype.createNoteString = function(orderDetails) {
 
   var descriptions = [];
   //query catalog for current item descriptions
-  var itemCatalog = this.api.itemCatalog(location_id);
+  var itemCatalog = this.api.itemCatalog();
 
   //if item catalog is empty, then we will print all values to labels
   itemCatalog.forEach( function (item) {

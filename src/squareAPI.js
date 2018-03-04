@@ -1,6 +1,6 @@
 function test() {
   var a = squareAPI();
-  a.OrderDetails('', 'ctOhb9LkHmz83Dt1ivXkLQB');
+  a.OrderDetails('ctOhb9LkHmz83Dt1ivXkLQB');
 }
 
 function squareAPI() {
@@ -33,16 +33,14 @@ squareAPI.prototype.call = function(url, params) {
  *
  * Assumes SQUARE_ACCESS_TOKEN for authentication is stored in Script Property of same name
  *
- * @param {string} location_id
- *   Location ID corresponding to Square Location
  * @param {string} order_id
  *   Order ID corresponding to Square Payment object
  * @returns {object} payment object from Square V1 API
  *   https://docs.connect.squareup.com/api/connect/v1#datatype-payment
  * @throws Will throw an error if the API call to Square is not successful for any reason
  */
-squareAPI.prototype.OrderDetails = function(location_id, order_id){
-  var url = "https://connect.squareup.com/v1/" + location_id + "/payments/" + order_id;
+squareAPI.prototype.OrderDetails = function(order_id){
+  var url = "https://connect.squareup.com/v1/me/payments/" + order_id;
   return this.call(url);
 }
 
@@ -138,9 +136,7 @@ squareAPI.prototype.locations = function() {
 
 squareAPI.prototype.pullPaymentsSince = function(sinceX) {
   // https://docs.connect.squareup.com/api/connect/v1#navsection-payments
-//  var locations = this.locations();
-  var location_id = 'me';
-  var url = 'https://connect.squareup.com/v1/' + location_id + '/payments?begin_time=' + sinceX + '&end_time=' + new Date().toISOString();
+  var url = 'https://connect.squareup.com/v1/me/payments?begin_time=' + sinceX + '&end_time=' + new Date().toISOString();
   return this.call(url);
 }
 
@@ -149,14 +145,12 @@ squareAPI.prototype.pullPaymentsSince = function(sinceX) {
  *
  * Assumes SQUARE_ACCESS_TOKEN for authentication is stored in Script Property of same name
  *
- * @param {string} location_id
- *   Location ID corresponding to Square Location
  * @returns {object} array of items in catalog for specified location
  *   https://docs.connect.squareup.com/api/connect/v1#datatype-item
  * @throws Will throw an error if the API call to Square is not successful for any reason
  */
-squareAPI.prototype.itemCatalog = function(location_id){
-  var url = "https://connect.squareup.com/v1/" + location_id + "/items";
+squareAPI.prototype.itemCatalog = function(){
+  var url = "https://connect.squareup.com/v1/" + this.default_location_id + "/items";
   return this.call(url);
 }
 

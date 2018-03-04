@@ -50,7 +50,7 @@ function doPost(e) {
   console.log("doPost: request contents: " + e.postData.contents);
 
   // test for query param to see if we should act to update online order data
-  if (!isEmpty(e.parameter) && e.parameter.uploadOnlineOrder == true) {
+  if (!isEmpty(e.parameter) && e.parameter.uploadOnlineOrder == "true") {
     worksheet.updateNotesForOnlineOrders(input);
   }
   else { // treat as webhook call
