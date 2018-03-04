@@ -61,9 +61,9 @@ FormatLabel.prototype.formatLabelFromSquare = function(body, orderNumber, orderD
       var line1 = body
         .appendParagraph(pad('    ', orderNumber.toString(), true)
           + '                     '
-          + pad('  ', mealCount.toString(), true)
+          + pad(' ', mealCount.toString(), true)
           + " of "
-          + pad('  ', totalMeals.toString(), true))
+          + pad(' ', totalMeals.toString(), true))
         .setFontFamily(font)
         .setSpacingAfter(0)
         .setBold(true)
@@ -82,41 +82,43 @@ FormatLabel.prototype.formatLabelFromSquare = function(body, orderNumber, orderD
       var variationString = "";
       if (item.item_variation_name !== "Regular") {
         //if this is adult/child then print; otherwise skip
-        variationString = " (" + item.item_variation_name + ")  ";
+        variationString = " (" + item.item_variation_name + ") + ";
       }
+      var sideItemName = item.modifiers[0].name;
+      if (sideItemName == "Mac & Cheese")
+        sideItemName += " (Side)";
 
       var line3 = body
-        .appendParagraph(menu.items[item.name].abbr + variationString)
+        .appendParagraph(menu.items[item.name].abbr + variationString + menu.items[sideItemName].abbr)
         .setFontFamily(font)
         .setBold(true)
         .setFontSize(11)
         .setAlignment(DocumentApp.HorizontalAlignment.LEFT);
 
       // 33 characters at 11pt
-      var sideItemName = item.modifiers[0].name;
-      if (sideItemName == "Mac & Cheese")
-        sideItemName += " (Side)";
-      
       var soupsString = "";
       console.log("formatLabelFromSquare: totalSoups = " + totalSoups.toString());
       if (parseInt(totalSoups) > 0) {
-        soupsString = "\t" + totalSoups.toString() + " Soup" + ((parseInt(totalSoups) > 1) ? "s" : "");
+        soupsString = "Total of " + totalSoups.toString() + " Soup" + ((parseInt(totalSoups) > 1) ? "s" : "" + " in Order");
       }
       console.log("formatLabelFromSquare: soupsString = " + soupsString);
       var line4 = body
-        .appendParagraph(menu.items[sideItemName].abbr + soupsString)
+        .appendParagraph(soupsString)
         .setFontFamily(font)
         .setBold(true)
         .setFontSize(11)
         .setAlignment(DocumentApp.HorizontalAlignment.LEFT);
 
       // 37 characters at 10pt
-      var line5 = body
-        .appendParagraph(notes[mealCount - 1])
-        .setFontFamily(font)
-        .setBold(false)
-        .setFontSize(10)
-        .setAlignment(DocumentApp.HorizontalAlignment.RIGHT);
+      if (notes[mealCount - 1].length > 0) {
+        var line5 = body
+          .appendParagraph(notes[mealCount - 1])
+          .setFontFamily(font)
+          .setBold(false)
+          .setFontSize(10)
+          .setItalic(true)
+          .setAlignment(DocumentApp.HorizontalAlignment.RIGHT);
+      }
 
       mealCount++;
       if (mealCount < totalMeals) {
@@ -124,15 +126,49 @@ FormatLabel.prototype.formatLabelFromSquare = function(body, orderNumber, orderD
       }
     }
   });
-  // XXXX              XX of XX
-  //               XXXXXXXXXXXX
-  // XXXXX   XXXXXXXX   XX Soup
-  // XXXXXXXXXXXXXXXXXXXXXXXXXX
 
-  // Last Name       Meal X of Y
-  // Hand Breaded Fish (ADULT|CHILD)
-  // Side: [Fries|Red Potato]
-  // Z Soups in Order
+  //handle only soup corner case
+  if ((totalMeals == 0) && (totalSoups > 0)){
+    // 26 characters at 14pt
+      var line1 = body
+        .appendParagraph(pad('    ', orderNumber.toString(), true)
+          + '             '
+          + 'Soup Only')
+        .setFontFamily(font)
+        .setSpacingAfter(0)
+        .setBold(true)
+        .setFontSize(14)
+        .setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+
+      // 37 characters at 10pt
+      var line2 = body
+        .appendParagraph(customerName)
+        .setFontFamily(font)
+        .setBold(false)
+        .setFontSize(11)
+        .setAlignment(DocumentApp.HorizontalAlignment.RIGHT);
+      // 33 characters at 11pt
+      var line3 = body
+        .appendParagraph("")
+        .setFontFamily(font)
+        .setBold(true)
+        .setFontSize(11)
+        .setAlignment(DocumentApp.HorizontalAlignment.LEFT);
+
+      // 33 characters at 11pt
+      var soupsString = "";
+      console.log("formatLabelFromSquare: totalSoups = " + totalSoups.toString());
+      if (parseInt(totalSoups) > 0) {
+        soupsString = "Total of " + totalSoups.toString() + " Soup" + ((parseInt(totalSoups) > 1) ? "s" : "" + " in Order");
+      }
+      console.log("formatLabelFromSquare: soupsString = " + soupsString);
+      var line4 = body
+        .appendParagraph(soupsString)
+        .setFontFamily(font)
+        .setBold(true)
+        .setFontSize(11)
+        .setAlignment(DocumentApp.HorizontalAlignment.LEFT);
+  }
 
   return;
 }

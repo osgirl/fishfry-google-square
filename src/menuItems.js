@@ -158,7 +158,7 @@ function menuItems() {
           serving: 'SIDE'
         }),
         'Mac & Cheese (Side)': new menuItem({
-          abbr: 'Mac & Chz (Side)',
+          abbr: 'M&C',
           ingredients: [
             new menuItemIngredient('Mac & Cheese', 0.5)
           ],

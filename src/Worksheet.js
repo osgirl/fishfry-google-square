@@ -121,6 +121,20 @@ Worksheet.prototype.upsertTransaction = function (proposedOrder) {
         if ((currentState == "Paid Online") || (currentState == "Present")) {
           console.log("upsertTransaction: detected full refund, cancelling order");
           this.worksheet.updateCell(rowIndex,'Order State', 'Cancelled');
+          this.worksheet.updateCell(rowIndex,'Total Amount', newAmount);
+          //delete meals/soups/serving counts for this transaction
+          this.worksheet.updateCell(rowIndex,'Total Meals', 0);
+          this.worksheet.updateCell(rowIndex,'Total Soups', 0);
+          this.worksheet.updateCell(rowIndex,'Fried Fish', 0);
+          this.worksheet.updateCell(rowIndex,'Baked Fish', 0);
+          this.worksheet.updateCell(rowIndex,'Fried Shrimp', 0);
+          this.worksheet.updateCell(rowIndex,'Baked Shrimp', 0);
+          this.worksheet.updateCell(rowIndex,'Mac & Cheese', 0);
+          this.worksheet.updateCell(rowIndex,'Grilled Cheese', 0);
+          this.worksheet.updateCell(rowIndex,'French Fries', 0);
+          this.worksheet.updateCell(rowIndex,'Red Potato', 0);
+          this.worksheet.updateCell(rowIndex,'Soup', 0);
+
         }
         else if (currentState !== "Cancelled") {
           console.log("upsertTransaction: detected full refund, order has already been processed so setting total to " + newAmount);
