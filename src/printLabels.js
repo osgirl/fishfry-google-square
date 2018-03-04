@@ -86,7 +86,7 @@ Printer.prototype.PrintFileUrl = function(filename_url) {
     console.log("PrintFileUrl: " + filename_url);
     file = DocumentApp.openByUrl(filename_url);
   } catch (e) {
-    console.error("PrintFileUrl: exception opening by url, will try by ID: " + e);
+    console.error({message: "PrintFileUrl: exception opening by url, will try by ID", data: e});
     // TODO: sometimes it's unable to open the URL, but if we pass the ID it will succeed...
     return this.PrintFileId(this.IdFromUrl(filename_url));
   }
@@ -98,7 +98,7 @@ Printer.prototype.IdFromUrl = function(str) {
   try {
     return str.substr(str.indexOf('id=')+3);
   } catch (e) {
-    console.error("IdFromUrl: execption in parsing url: " + e);
+    console.error({message: "IdFromUrl: execption in parsing url", data: e});
   }
   return null;
 }

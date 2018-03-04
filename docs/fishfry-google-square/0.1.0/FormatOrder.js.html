@@ -205,7 +205,7 @@ FormatOrder.prototype.ConvertSquareToSheet = function(location_id, txnMetadata, 
       }
     }
     if (!(key in order.items)) {
-      console.log("ConvertSquareToSheet: unknown menu item found in Square Order: " + JSON.stringify(item));
+      console.warn({message: "ConvertSquareToSheet: unknown menu item found in Square Order", data: item});
     }
     order.items[key].increment_quantity(item.quantity);
 
@@ -219,7 +219,7 @@ FormatOrder.prototype.ConvertSquareToSheet = function(location_id, txnMetadata, 
         side += ' (Side)';
       }
       if (!(side in order.items)) {
-        console.log("unknown side item found in Square Order: " + JSON.stringify(modifier));
+        console.warn({message: "ConvertSquareToSheet: unknown side item found in Square Order", data: modifier});
       }
       order.items[side].increment_quantity(item.quantity);
     });

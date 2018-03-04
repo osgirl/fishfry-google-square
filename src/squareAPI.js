@@ -89,7 +89,7 @@ squareAPI.prototype.CustomerFamilyName = function(customer_id) {
   try {
     return responseObj.customer.family_name;
   } catch (e) {
-    console.error("CustomerFamilyName: could not fetch family name from Square API response: " + responseObj);
+    console.error({message: "CustomerFamilyName: could not fetch family name from Square API response", data: responseObj});
     return "";
   }
 }
@@ -102,7 +102,7 @@ squareAPI.prototype.TransactionMetadata = function (location_id, order_id, creat
   var customer_id = "";
   var note = "";
   
-  console.log("TransactionMetadata: Txn details: " + JSON.stringify(responseObj));
+  console.log({message: "TransactionMetadata: Txn details", data: responseObj});
 
   // because we're searching on a time-based window, the call may return up to 50 transactions (via pagination).
   // we safely? assume that our transactional load is so low that we do not receive more than 50 transactions within the same second.

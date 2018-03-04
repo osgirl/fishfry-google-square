@@ -36,7 +36,7 @@ function loggedUrlFetch(url, params) {
     console.log({message:"loggedUrlFetch: response", initialData: response});
     return JSON.parse(response.getContentText());
   } catch (e) {
-    console.error("loggedUrlFetch: UrlFetchApp.fetch() returned error  " + e);
+    console.error({message: "loggedUrlFetch: UrlFetchApp.fetch() returned error", data: e});
     return {};
   }
 }

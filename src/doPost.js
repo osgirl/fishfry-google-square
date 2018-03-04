@@ -38,7 +38,7 @@ function doGet(e) {
  *
  */
 function doPost(e) {  
-  console.log('doPost: received payload: ' + e);
+  console.log({message: 'doPost: received payload', data: e});
 
   if (e.hasOwnProperty('postData') && e.postData.type != "application/json") {
     var errMsg = "doPost: invalid input content type for payload";
@@ -47,7 +47,6 @@ function doPost(e) {
   }
   
   var input = JSON.parse(e.postData.contents);
-  console.log("doPost: request contents: " + e.postData.contents);
 
   var worksheet = new Worksheet();
   // test for query param to see if we should act to update online order data

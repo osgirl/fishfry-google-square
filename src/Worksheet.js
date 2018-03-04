@@ -217,7 +217,7 @@ Worksheet.prototype.printLabel = function(orderNumber, printerId, advanceState) 
   }
 
   var order = this.worksheet.getRowAsObject(rowIndex);
-  console.log("printLabel: order data from sheet: " + JSON.stringify(order));
+  console.log({message: "printLabel: order data from sheet", data: order});
 
   if (order['Last Name'] == "") {
     var errMsg = 'printLabel: Missing last name for order: ' + orderNumber;
