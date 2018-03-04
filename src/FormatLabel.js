@@ -12,11 +12,8 @@ FormatLabel.prototype.newLabelTemplate = function(filename) {
   var labelTemplateFile = DriveApp.getFileById(DocumentApp.openByUrl(template_url).getId());
   var labelsFolder = DriveApp.getFoldersByName("ff_labels").next();
 
-  // TODO: verify file doesn't exist before we try to setName?
   var editableLabelDocId = labelTemplateFile.makeCopy(labelsFolder).setName(filename).getId();
-  var editableLabelDoc = DocumentApp.openById(editableLabelDocId);
-  //TODO: verify file exists before returning?
-  return editableLabelDoc;
+  return DocumentApp.openById(editableLabelDocId);
 }
 
 /*
@@ -175,11 +172,6 @@ FormatLabel.prototype.formatLabelFromSquare = function(body, orderNumber, orderD
   }
 
   return;
-}
-
-FormatLabel.prototype.formatLabelFromSheet = function(body, orderDetails) {
-  //TODO: format from data available in Sheet
-  return ['test body when not generated from square'];
 }
 
 FormatLabel.prototype.createLabelFile = function(orderNumber, orderDetails, customerName, notes, totalMeals, totalSoups) {

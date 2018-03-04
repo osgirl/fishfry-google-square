@@ -99,8 +99,6 @@
  * @returns {integer} next order number for use
  */
 FormatOrder.prototype.getOrderNumberAtomic = function() {
-  //TODO: be sure there is no possibility of deadlock here...
-
   // get global lock before fetching property
   var lock = LockService.getDocumentLock();
   while (!lock.tryLock(1000)) {
@@ -122,14 +120,13 @@ FormatOrder.prototype.getOrderNumberAtomic = function() {
     props.setProperty('atomicOrderNumber', next);
   }
   catch (e) {
-    console.error('getOrderNumberAtomic: Exception in setting/incrementing atomic order integer: ' + e);
+    console.error({message: 'getOrderNumberAtomic: Exception in setting/incrementing atomic order integer', data: e});
   }
   finally {
     lock.releaseLock();
   }
 
   if (next === null) {
-    // TODO: should this have a backup method when this condition happens?
     var errMsg = "getOrderNumberAtomic: Unable to acquire next order number!"
     console.error(errMsg);
     throw errMsg;
@@ -246,7 +243,7 @@ FormatOrder.prototype.ConvertSquareToSheet = function(location_id, txnMetadata, 
     "Order Venue": (this.getStateFromOrigin(txnMetadata.origin) == "Present") ? "In Person" : "Online",
     "Order State": this.getStateFromOrigin(txnMetadata.origin),
     "Square Receipt Link": orderDetails.receipt_url,
-    "Time Present": (this.getStateFromOrigin(txnMetadata.origin) == "Present") ? convertISODate(new Date()) : "", //TODO: fix date formatting
+    "Time Present": (this.getStateFromOrigin(txnMetadata.origin) == "Present") ? convertISODate(new Date()) : "",
     "Total Meals": mealCount,
     "Total Soups": soupCount,
     "Soup": soupCount

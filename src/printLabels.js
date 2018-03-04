@@ -1,6 +1,5 @@
 function Printer (printerId) {
   this.printerId = printerId;
-  //TODO: validate ID is accessable from script via getPrinterList
 
   this.service = this.getCloudPrintService();
   this.oauth_token = this.service.getAccessToken();

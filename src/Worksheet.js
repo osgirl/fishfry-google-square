@@ -235,7 +235,6 @@ Worksheet.prototype.printLabel = function(orderNumber, printerId, advanceState) 
     this.worksheet.updateCell(rowIndex, 'Label Doc Link', order['Label Doc Link']);
   }
 
-  //TODO: catch and raise exception
   var printer = new Printer(printerId);
   if (printer.PrintFileUrl(order['Label Doc Link']) !== true) {
     var errMsg = 'printLabel: Print was unsuccessful for order: ' + orderNumber;

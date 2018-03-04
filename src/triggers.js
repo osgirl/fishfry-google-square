@@ -91,7 +91,6 @@ function pullSquarePayments() {
   var api = new squareAPI();
   var payments = api.pullPaymentsSince(new Date().toISOString());
   for (var i in payments) {
-    //TODO: we don't have access to the location_id... will this still work if we use 'me'?
     var order = fmt.SquareTransactionToSheet(api.default_location_id, payments[i].id);
     upsertTransaction(order);
   }
@@ -172,7 +171,6 @@ function printLabel(order_id, printer_id) {
 function reprintLabel(order_id, printer_id) {
   var worksheet = new Worksheet();
   // we do not validate nor check state for reprinting here
-  //TODO: perhaps we should require minimum >= present?
   worksheet.reprintLabel(order_id, printer_id);
 }
 

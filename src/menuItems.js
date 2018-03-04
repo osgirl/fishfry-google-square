@@ -32,7 +32,6 @@ function menuItems() {
         'SIDE',
         'SOUP'
     ];
-    // TODO: get menu items from Square
     this.items = {
         'Fried Fish': new menuItem({
           abbr: 'Fried Fish',

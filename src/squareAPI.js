@@ -4,7 +4,6 @@ function test() {
 }
 
 function squareAPI() {
-  //TODO: replace with nodeJS package? https://docs.connect.squareup.com/articles/client-libraries#nodejsclientlibrary
   this.default_location_id = 'D8BZ0GPZ20V86'; //default location id
 }
 
