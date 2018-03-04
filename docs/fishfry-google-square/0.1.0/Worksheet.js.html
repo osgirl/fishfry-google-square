@@ -92,7 +92,9 @@
   if (spreadsheet_id === null || spreadsheet_id == undefined) {
     spreadsheet_id = '1NbNqn87RH-T9CoScqKejJlSxOo_CW4VMUnDKzgcE8TU';
   }
-  worksheet_name = "Current Event Transaction Log";
+  if (worksheet_name === null || worksheet_name == undefined) {
+    worksheet_name = "Current Event Transaction Log";
+  }
 
   // https://developers.google.com/apps-script/reference/spreadsheet/spreadsheet-app#openbyidid
   // The code below opens a spreadsheet using its ID and logs the name for it.
@@ -101,6 +103,7 @@
   this.spreadsheet = new ManagedSpreadsheet(spreadsheet_id);
   this.worksheet = this.spreadsheet.sheet(worksheet_name);
   this.order_states = [
+    'Cancelled',
     'Paid Online',
     'Present',
     'Labeled',
@@ -143,12 +146,105 @@ Worksheet.prototype.upsertTransaction = function (proposedOrder) {
       this.updateWaitTimeFormulas(rowIndex);
     }
   } else {
-    // the transaction has already been inserted; we need to update it
+    // the transaction has already been inserted; we may need to update it
     var existingOrder = this.worksheet.getRowAsObject(rowIndex);  
-    //we need to determine the relevant delta between new and old
-    // what if there is a "reversion in state?"
+    console.warn({message:"upsertTransaction: received an update to order " + proposedOrder['Payment ID'] + ": ", initialData: proposedOrder});
 
-    //TODO: determine if refund, then delete row from table
+    // reasons we'd be here:
+    // (1) we're polling square instead of dealing with webhooks
+    //     - in this case, the common path is that we don't need to make any changes
+    // (2) we got a webhook for a payment update (refund)
+    
+    if (existingOrder['Order State'] == "Cancelled") {
+      console.log("upsertTransaction: payment " + proposedOrder['Payment ID'] + " has already been cancelled; skipping");
+      return;
+    }
+
+    // actions to take: check for refunds associated with this payment ID
+    var api = new squareAPI();
+    var paymentData = api.OrderDetails(proposedOrder['Payment ID']);
+    
+    if (paymentData.refunds.length == 0){
+      // did not find refunds, simply return
+      console.log("upsertTransaction: did not find any refunds for payment " + proposedOrder['Payment ID'] + "; skipping");
+      return;
+    }
+    else {
+      var fullRefund = false;
+      // either we will see a FULL refund type or the sum of all partial refunds == the total collected money
+      if ((paymentData.refunds.filter(function (refund) { return refund.type == "FULL"; }).length > 0) ||
+          (parseInt(paymentData.total_collected_money.amount) == Math.abs(parseInt(paymentData.refunded_money.amount))))
+        fullRefund = true;
+
+      var currentState = existingOrder['Order State'];
+
+      //compute new total amount
+      var newAmount = (parseInt(paymentData.total_collected_money.amount) +
+                       parseInt(paymentData.refunded_money.amount))/100;//refunded money is a negative #
+      if (newAmount == parseInt(existingOrder['Total Amount'])){
+        console.log("upsertTransaction: received refund webhook but it appears we're up to date.. skipping");
+        return;
+      }
+
+      // find the "latest" refund as we (correctly?) assume that all prior refunds have been processed.
+      var refund = paymentData.refunds.sort(function compare(a,b) {
+        var aDate = new Date(a.created_at);
+        var bDate = new Date(b.created_at);
+        // a &lt; b
+        if (aDate &lt; bDate) {
+          return 1; // we want this in desc order
+        }
+        // a > b
+        if (aDate > bDate) {
+          return -1;// we want this in desc order
+        }
+        // a must be equal to b
+        return 0;
+      })[0];
+
+      if (fullRefund) {
+        // if full refund, we should act dependent on existing order state:
+        // states: cancelled (do nothing, we should have bailed above)
+        //         paid online|present (change state to cancelled)
+        //         labeled|ready|closed (leave state alone, update only total amount)
+        if ((currentState == "Paid Online") || (currentState == "Present")) {
+          console.log("upsertTransaction: detected full refund, cancelling order");
+          this.worksheet.updateCell(rowIndex,'Order State', 'Cancelled');
+        }
+        else if (currentState !== "Cancelled") {
+          console.log("upsertTransaction: detected full refund, order has already been processed so setting total to " + newAmount);
+          this.worksheet.updateCell(rowIndex,'Total Amount', newAmount);
+        }
+      }
+      else {
+        // if partial refund, we should act dependent on existing order state:
+        // states: cancelled (do nothing, we should have bailed above)
+        //         all other states (leave state alone, update only total amount)
+        //
+        // we can not explicitly update the meal counts/servings/etc as Square does not update the itemization based on the refund
+
+        //compute new total amount
+        console.log("upsertTransaction: detected partial refund, setting total to " + newAmount);
+
+        if (currentState !== "Cancelled") {
+          this.worksheet.updateCell(rowIndex,'Total Amount', newAmount);
+        }
+      }
+
+      var refundsSheet = new Worksheet(null,"Refunds");
+      var refundObject = {
+        'Order Number': existingOrder['Order Number'],
+        'Square Payment ID': existingOrder['Payment ID'],
+        'Receipt URL': existingOrder['Square Receipt Link'],
+        'State When Refunded': existingOrder['Order State'],
+        'Total Amount': existingOrder['Total Amount'],
+        'Refund Amount': Math.abs(parseInt(refund.refunded_money.amount)/100),
+        'Reason for Refund': refund.reason,
+        'Refund Type': refund.type,
+        'Time of Refund': convertISODate(new Date(refund.created_at))
+      };
+      refundsSheet.worksheet.append(refundObject);
+    }
   }
 }
 
@@ -197,6 +293,13 @@ Worksheet.prototype.printLabel = function(orderNumber, printerId, advanceState) 
 
   var order = this.worksheet.getRowAsObject(rowIndex);
   console.log("printLabel: order data from sheet: " + JSON.stringify(order));
+
+  if (order['Last Name'] == "") {
+    var errMsg = 'printLabel: Missing last name for order: ' + orderNumber;
+    console.error(errMsg);
+    Browser.msgBox(errMsg);
+    return false;
+  }
 
   // retrieve filename from row
   if (order['Label Doc Link'] == "") {
@@ -303,6 +406,69 @@ Worksheet.prototype.validateAndAdvanceState = function(orderNumber, fromState) {
   this.worksheet.worksheet.getRange(timeCell).setNumberFormat("h:mmam/pm");
 
   return rowIndex;
+}
+
+/**
+ * This method extracts the note field for a given online order, and sets the cell in
+ * the spreadsheet that will store the note across all meals, so that the message shows
+ * up on every label that is printed.
+ *
+ * The input data to this method should be an array of Objects, that looks like this:
+ *
+ * [{'Order Placed At': '2018-02-22 14:30:46 EST',
+ *   'Receipt Number': 'PXp3',
+ *   'Order Description': 'Clam Chowder Soup (Regular)',
+ *   'Fulfillment Type': 'ELECTRONIC',
+ *   'Order State': 'COMPLETED',
+ *   'Pickup At': '',
+ *   'Pickup Time Window': '',
+ *   'Subtotal': '$3.50',
+ *   'Tax': '$0.00',
+ *   'Shipping': '$0.00',
+ *   'Total': '$3.50',
+ *   ...
+ *   'Shipping Address': '',
+ *   'CC Brand': 'VISA',
+ *   'Note': 'test note to merchant' }
+ */
+Worksheet.prototype.updateNotesForOnlineOrders = function(onlineOrderData) {
+  //fetch once for faster iteration
+  var allOrders = this.worksheet.all();
+
+  onlineOrderData.forEach( function(onlineOrder) {
+    var match = allOrders.filter(function(sheetOrder) {
+      //search based on receipt number &amp;&amp; total amount to match as data does not
+      //provide the entire payment ID, just the first four characters
+      //also need to strip the $ character off of the onlineOrder Total value
+      return (sheetOrder['Payment ID'].startsWith(onlineOrder['Receipt Number']) &amp;&amp;
+              sheetOrder['Total Amount'] == onlineOrder['Total'].substring(1));
+    });
+
+    //match should be an array of size 1, but if we don't find it then just return
+    if (match.length == 0){
+      console.log('updateNotesForOnlineOrders: did not find matches for ' + onlineOrder['Receipt Number']);
+      return;
+    }
+    else if (match.length > 1){
+      console.error('updateNotesForOnlineOrders: found multiple matches for ' + onlineOrder['Receipt Number']);
+      return;
+    }
+
+    var notes = new Array(parseInt(match[0]['Total Meals']));
+    //set a note for each meal to be a copy of the online order note.
+    notes.map(function() { return onlineOrder['Note']; });
+
+    var rowIndex = this.worksheet.rowIndex('Payment ID',match[0]['Payment ID']);
+
+    this.worksheet.updateCell(rowIndex,'Note on Order',JSON.stringify(notes));
+    // we manually update the match object to save a round trip to the sheet
+    match[0]['Note on Order'] = JSON.stringify(notes);
+
+    //regenerate the labels now that we have the notes
+    var fmtLabel = new FormatLabel();
+    var newLabelUrl = fmtLabel.createLabelFileFromSheet(match[0]);
+    this.worksheet.updateCell(rowIndex,'Label Doc Link', newLabelUrl);
+  });
 }
 </code></pre>
   </article>

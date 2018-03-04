@@ -89,11 +89,12 @@
   <article>
     <pre class="prettyprint source linenums"><code>function test() {
   var a = squareAPI();
-  a.OrderDetails('', 'ctOhb9LkHmz83Dt1ivXkLQB');
+  a.OrderDetails('ctOhb9LkHmz83Dt1ivXkLQB');
 }
 
 function squareAPI() {
   //TODO: replace with nodeJS package? https://docs.connect.squareup.com/articles/client-libraries#nodejsclientlibrary
+  this.default_location_id = 'D8BZ0GPZ20V86'; //default location id
 }
 
 squareAPI.prototype.call = function(url, params) {
@@ -121,16 +122,14 @@ squareAPI.prototype.call = function(url, params) {
  *
  * Assumes SQUARE_ACCESS_TOKEN for authentication is stored in Script Property of same name
  *
- * @param {string} location_id
- *   Location ID corresponding to Square Location
  * @param {string} order_id
  *   Order ID corresponding to Square Payment object
  * @returns {object} payment object from Square V1 API
  *   https://docs.connect.squareup.com/api/connect/v1#datatype-payment
  * @throws Will throw an error if the API call to Square is not successful for any reason
  */
-squareAPI.prototype.OrderDetails = function(location_id, order_id){
-  var url = "https://connect.squareup.com/v1/" + location_id + "/payments/" + order_id;
+squareAPI.prototype.OrderDetails = function(order_id){
+  var url = "https://connect.squareup.com/v1/me/payments/" + order_id;
   return this.call(url);
 }
 
@@ -192,7 +191,7 @@ squareAPI.prototype.TransactionMetadata = function (location_id, order_id, creat
   var customer_id = "";
   var note = "";
   
-  console.log("TransactionMetadata: Txn details: " + responseObj);
+  console.log("TransactionMetadata: Txn details: " + JSON.stringify(responseObj));
 
   // because we're searching on a time-based window, the call may return up to 50 transactions (via pagination).
   // we safely? assume that our transactional load is so low that we do not receive more than 50 transactions within the same second.
@@ -226,9 +225,21 @@ squareAPI.prototype.locations = function() {
 
 squareAPI.prototype.pullPaymentsSince = function(sinceX) {
   // https://docs.connect.squareup.com/api/connect/v1#navsection-payments
-//  var locations = this.locations();
-  var location_id = 'me';
-  var url = 'https://connect.squareup.com/v1/' + location_id + '/payments?begin_time=' + sinceX + '&amp;end_time=' + new Date().toISOString();
+  var url = 'https://connect.squareup.com/v1/me/payments?begin_time=' + sinceX + '&amp;end_time=' + new Date().toISOString();
+  return this.call(url);
+}
+
+/**
+ * Retrieves current item descriptions from catalog.
+ *
+ * Assumes SQUARE_ACCESS_TOKEN for authentication is stored in Script Property of same name
+ *
+ * @returns {object} array of items in catalog for specified location
+ *   https://docs.connect.squareup.com/api/connect/v1#datatype-item
+ * @throws Will throw an error if the API call to Square is not successful for any reason
+ */
+squareAPI.prototype.itemCatalog = function(){
+  var url = "https://connect.squareup.com/v1/" + this.default_location_id + "/items";
   return this.call(url);
 }
 

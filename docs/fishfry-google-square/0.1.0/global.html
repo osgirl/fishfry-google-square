@@ -325,7 +325,8 @@
 
 
   <div class="description">
-    <p>This script processes the webhook request from the Square Connect V1 API which
+    <p>This script processes two styles of requests:</p>
+<p>(1) the webhook request from the Square Connect V1 API which
 indicates that an order has been created or updated. We use the information
 passed in the webhook request to query the Square Connect API for additional
 order information (meals, sides, quantities, etc).</p>
@@ -340,6 +341,14 @@ a request header, but since GAS won't show us the value we can't validate it.</p
   &quot;entity_id&quot;: &quot;Jq74mCczmFXk1tC10GB&quot;
 }</p>
 <p>https://docs.connect.squareup.com/api/connect/v1#setupwebhooks</p>
+<p>(2) an import of online order data extracted from the export Order Details feature
+of the Square Online Store interface (described at:
+https://squareup.com/help/us/en/article/5141-manage-your-online-store-orders#export-online-store-order-details )</p>
+<p>We use this data currently to extract per-order Notes to Merchant, and store that
+note on each meal ticket to be printed.</p>
+<p>Posts to this endpoint for type (2) need to have a query parameter named
+'uploadOnlineOrder' set to the value of 'true' in order to be successfully
+processed.</p>
   </div>
 
 
@@ -382,7 +391,7 @@ a request header, but since GAS won't show us the value we can't validate it.</p
     <dd class="tag-source">
       <ul class="dummy">
         <li>
-          <a href="doPost.js.html">doPost.js</a>, <a href="doPost.js.html#line26">line 26</a>
+          <a href="doPost.js.html">doPost.js</a>, <a href="doPost.js.html#line40">line 40</a>
         </li>
       </ul>
     </dd>

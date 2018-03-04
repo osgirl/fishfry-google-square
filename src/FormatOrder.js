@@ -86,17 +86,24 @@ FormatOrder.prototype.getStateFromOrigin = function (origin){
 //Order.prototype.upsertTransactionLog = function (location_id, payment_id){
 FormatOrder.prototype.SquareTransactionToSheet = function (location_id, payment_id) {
   // try to get updated order details from Square
-  var orderDetails = this.api.OrderDetails(location_id, payment_id);
+  var orderDetails = this.api.OrderDetails(payment_id);
   var txnMetadata = this.api.TransactionMetadata(location_id, payment_id, orderDetails.created_at);
-  while (txnMetadata.customer_id == undefined){
+  var sleepTimer = 1000;
+  while (txnMetadata.customer_id == undefined && sleepTimer <= 16000){
     console.log("SquareTransactionToSheet: didnt find customer name, trying again");
     txnMetadata = this.api.TransactionMetadata(location_id, payment_id, orderDetails.created_at);
+    Utilities.sleep(sleepTimer);
+    sleepTimer *= 2;
   }
-  var lastName = this.api.CustomerFamilyName(txnMetadata.customer_id);
-  return this.ConvertSquareToSheet(txnMetadata, orderDetails, lastName);
+  var lastName = "";
+  // don't bother calling to get a last name if we don't have the customer ID
+  if (txnMetadata.customer_id !== undefined){
+    lastName = this.api.CustomerFamilyName(txnMetadata.customer_id);
+  }
+  return this.ConvertSquareToSheet(location_id, txnMetadata, orderDetails, lastName);
 }
 
-FormatOrder.prototype.ConvertSquareToSheet = function(txnMetadata, orderDetails, lastName) {
+FormatOrder.prototype.ConvertSquareToSheet = function(location_id, txnMetadata, orderDetails, lastName) {
   // convert Square schema to Sheet schema
   var order = new menuItems();
   orderDetails.itemizations.forEach( function (item) {
@@ -135,6 +142,7 @@ FormatOrder.prototype.ConvertSquareToSheet = function(txnMetadata, orderDetails,
   var soupCount = order.servingCount('SOUP');
   var orderNumber = this.getOrderNumberAtomic();
   var fmtLabel = new FormatLabel();
+  var notes = this.createNoteString(orderDetails);
 
   // format data for Sheet
   var result = {
@@ -142,10 +150,10 @@ FormatOrder.prototype.ConvertSquareToSheet = function(txnMetadata, orderDetails,
     "Payment ID": orderDetails.id,
     "Total Amount": parseInt(orderDetails.total_collected_money.amount)/100,
     "Order Received Date/Time": convertISODate(new Date(orderDetails.created_at)),
-    "Last Name": lastName, //TODO: timing issue around fetching this prematurely?
+    "Last Name": lastName,
     "Expedite": "No",
-    "Note on Order": txnMetadata.note,//TODO: not sure this is the correct field
-    "Label Doc Link": fmtLabel.createLabelFile(orderNumber, orderDetails, txnMetadata, lastName, mealCount, soupCount),
+    "Note on Order": notes,
+    "Label Doc Link": fmtLabel.createLabelFile(orderNumber, orderDetails, lastName, JSON.parse(notes), mealCount, soupCount),
     "Order Venue": (this.getStateFromOrigin(txnMetadata.origin) == "Present") ? "In Person" : "Online",
     "Order State": this.getStateFromOrigin(txnMetadata.origin),
     "Square Receipt Link": orderDetails.receipt_url,
@@ -165,4 +173,35 @@ FormatOrder.prototype.ConvertSquareToSheet = function(txnMetadata, orderDetails,
   }
 
   return result;
+}
+
+FormatOrder.prototype.createNoteString = function(orderDetails) {
+
+  var descriptions = [];
+  //query catalog for current item descriptions
+  var itemCatalog = this.api.itemCatalog();
+
+  //if item catalog is empty, then we will print all values to labels
+  itemCatalog.forEach( function (item) {
+    //only store unique descriptions
+    if (item.hasOwnProperty('description') && (descriptions.indexOf(item.description) == -1)) {
+      descriptions.push(item.description);
+    }
+  });
+
+  var notes = [];
+  orderDetails.itemizations.forEach( function (item) {
+    if (item.name == "Clam Chowder Soup")
+      return;
+
+    var noteString = "";
+    //if there's no note or its simply a copy of the known descriptions, put nothing
+    if (item.notes !== undefined && (descriptions.indexOf(item.notes) == -1))
+      noteString = item.notes;
+
+    for (var i = 0; i < parseInt(item.quantity); i++)
+      notes.push(noteString);
+  });
+
+  return JSON.stringify(notes);
 }
