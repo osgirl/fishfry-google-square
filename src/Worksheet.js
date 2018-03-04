@@ -365,7 +365,7 @@ Worksheet.prototype.updateNotesForOnlineOrders = function(onlineOrderData) {
       //search based on receipt number && total amount to match as data does not
       //provide the entire payment ID, just the first four characters
       //also need to strip the $ character off of the onlineOrder Total value
-      return (sheetOrder['Payment ID'].startsWith(onlineOrder['Receipt Number']) &&
+      return ((sheetOrder['Payment ID'].substring(0,4) == onlineOrder['Receipt Number']) &&
               sheetOrder['Total Amount'] == onlineOrder['Total'].substring(1));
     });
 
@@ -379,11 +379,13 @@ Worksheet.prototype.updateNotesForOnlineOrders = function(onlineOrderData) {
       return;
     }
 
-    var notes = new Array(parseInt(match[0]['Total Meals']));
     //set a note for each meal to be a copy of the online order note.
-    notes.map(function() { return onlineOrder['Note']; });
+    var notes = [];
+    for (var i = 0; i < parseInt(match[0]['Total Meals']); i++){
+      notes.push(onlineOrder['Note']);
+    }
 
-    var rowIndex = this.worksheet.rowIndex('Payment ID',match[0]['Payment ID']);
+    var rowIndex = this.searchForTransaction('Payment ID',match[0]['Payment ID']);
 
     this.worksheet.updateCell(rowIndex,'Note on Order',JSON.stringify(notes));
     // we manually update the match object to save a round trip to the sheet
@@ -393,5 +395,5 @@ Worksheet.prototype.updateNotesForOnlineOrders = function(onlineOrderData) {
     var fmtLabel = new FormatLabel();
     var newLabelUrl = fmtLabel.createLabelFileFromSheet(match[0]);
     this.worksheet.updateCell(rowIndex,'Label Doc Link', newLabelUrl);
-  });
+  }, this);
 }

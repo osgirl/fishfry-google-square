@@ -49,6 +49,7 @@ function doPost(e) {
   var input = JSON.parse(e.postData.contents);
   console.log("doPost: request contents: " + e.postData.contents);
 
+  var worksheet = new Worksheet();
   // test for query param to see if we should act to update online order data
   if (!isEmpty(e.parameter) && e.parameter.uploadOnlineOrder == "true") {
     worksheet.updateNotesForOnlineOrders(input);
@@ -57,7 +58,6 @@ function doPost(e) {
     // PAYMENT_UPDATED will be sent regardless of creation or update
     if (input.event_type == 'PAYMENT_UPDATED'){
       var fmt_order = new FormatOrder();
-      var worksheet = new Worksheet();
       var txn = fmt_order.SquareTransactionToSheet(input.location_id, input.entity_id);
       worksheet.upsertTransaction(txn);
     }

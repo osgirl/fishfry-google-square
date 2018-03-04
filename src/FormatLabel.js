@@ -67,6 +67,7 @@ FormatLabel.prototype.formatLabelFromSquare = function(body, orderNumber, orderD
         .setFontFamily(font)
         .setSpacingAfter(0)
         .setBold(true)
+        .setItalic(false)
         .setFontSize(14)
         .setAlignment(DocumentApp.HorizontalAlignment.CENTER);
 
@@ -84,6 +85,8 @@ FormatLabel.prototype.formatLabelFromSquare = function(body, orderNumber, orderD
         //if this is adult/child then print; otherwise skip
         variationString = " (" + item.item_variation_name + ") + ";
       }
+      else
+        variationString = " + ";
       var sideItemName = item.modifiers[0].name;
       if (sideItemName == "Mac & Cheese")
         sideItemName += " (Side)";
@@ -137,6 +140,7 @@ FormatLabel.prototype.formatLabelFromSquare = function(body, orderNumber, orderD
         .setFontFamily(font)
         .setSpacingAfter(0)
         .setBold(true)
+        .setItalic(false)
         .setFontSize(14)
         .setAlignment(DocumentApp.HorizontalAlignment.CENTER);
 

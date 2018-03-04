@@ -123,7 +123,7 @@ function menuItems() {
           serving: 'MEAL'
         }),
         'Mac & Cheese': new menuItem({
-          abbr: 'Mac & Cheese (Main)',
+          abbr: 'Mac & Cheese',
           ingredients: [
             new menuItemIngredient('Mac & Cheese', 1)
           ],
