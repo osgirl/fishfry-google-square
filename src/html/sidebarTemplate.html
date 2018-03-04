@@ -40,16 +40,27 @@
   </div>
   -->
   <div class="orderDiv">
+    <form>
     <fieldset>
-      <legend>Mark Order as <?=futureState?></legend>
-      <input type="number" min="0" max="9999" name="order" id="OrderNumber" placeholder="e.g. 2047"/>
-      <input type="button" name="order" value="Mark <?=futureState?>" onclick="markOrder();"/>
+      <legend>Mark Order as <?=futureState?></legend>      
+        <input type="number" min="0" max="9999" name="order" id="OrderNumber" placeholder="e.g. 2047"/>
+        <input type="button" name="order" value="Mark <?=futureState?>" onclick="markOrder();"/>
+        <input type="submit" name="order" tabindex="-1" style="width: 0px;height: 0px;border: none"/>      
     </fieldset>
+    </form>
   </div>
 </div>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
 <script>
+  $(document).ready(function() {
+    $(".orderDiv :input").keypress(function(event) {
+      if (event.which == 13){
+        markOrder();
+      }
+    });
+  });
+
   function validateOrderNumber(orderNumber) {
     if (orderNumber === null || orderNumber === undefined || orderNumber == "") {
       alert("Order Number not specified!");
@@ -76,13 +87,14 @@
     $("#spinner").hide();
     document.getElementById('OrderNumber').value = '';
     $(":input").prop("disabled", false);
-
+    document.getElementById('OrderNumber').focus();
   }
   function onFailure(e){
     $("#spinner").hide();
     alert(e);
     document.getElementById('OrderNumber').value = '';
     $(":input").prop("disabled", false);
+    document.getElementById('OrderNumber').focus();
   }
 
 </script>

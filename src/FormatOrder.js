@@ -88,11 +88,18 @@ FormatOrder.prototype.SquareTransactionToSheet = function (location_id, payment_
   // try to get updated order details from Square
   var orderDetails = this.api.OrderDetails(location_id, payment_id);
   var txnMetadata = this.api.TransactionMetadata(location_id, payment_id, orderDetails.created_at);
-  while (txnMetadata.customer_id == undefined){
+  var sleepTimer = 1000;
+  while (txnMetadata.customer_id == undefined && sleepTimer <= 16000){
     console.log("SquareTransactionToSheet: didnt find customer name, trying again");
     txnMetadata = this.api.TransactionMetadata(location_id, payment_id, orderDetails.created_at);
+    Utilities.sleep(sleepTimer);
+    sleepTimer *= 2;
   }
-  var lastName = this.api.CustomerFamilyName(txnMetadata.customer_id);
+  var lastName = "";
+  // don't bother calling to get a last name if we don't have the customer ID
+  if (txnMetadata.customer_id !== undefined){
+    lastName = this.api.CustomerFamilyName(txnMetadata.customer_id);
+  }
   return this.ConvertSquareToSheet(location_id, txnMetadata, orderDetails, lastName);
 }
 
@@ -135,7 +142,7 @@ FormatOrder.prototype.ConvertSquareToSheet = function(location_id, txnMetadata, 
   var soupCount = order.servingCount('SOUP');
   var orderNumber = this.getOrderNumberAtomic();
   var fmtLabel = new FormatLabel();
-  var notes = createNoteString(location_id, orderDetails);
+  var notes = this.createNoteString(location_id, orderDetails);
 
   // format data for Sheet
   var result = {
@@ -162,7 +169,7 @@ FormatOrder.prototype.ConvertSquareToSheet = function(location_id, txnMetadata, 
 
   if (result['Label Doc Link'] == '') {
     // attempt to create the label again, using the data from Sheet rather than
-    result['Label Doc Link'] = createLabelFileFromSheet(result);
+    result['Label Doc Link'] = createLabelFileFromSheet(result, location_id);
   }
 
   return result;
@@ -177,18 +184,23 @@ FormatOrder.prototype.createNoteString = function(location_id, orderDetails) {
   //if item catalog is empty, then we will print all values to labels
   itemCatalog.forEach( function (item) {
     //only store unique descriptions
-    if (!(item.description in descriptions)) {
-      descriptions.append(item.description);
+    if (item.hasOwnProperty('description') && (descriptions.indexOf(item.description) == -1)) {
+      descriptions.push(item.description);
     }
   });
 
   var notes = [];
   orderDetails.itemizations.forEach( function (item) {
+    if (item.name == "Clam Chowder Soup")
+      return;
+
+    var noteString = "";
     //if there's no note or its simply a copy of the known descriptions, put nothing
-    if (item.notes == undefined || item.notes in descriptions)
-      notes.append('');
-    else //copy the value for this meal into the array
-      notes.append(item.notes);
+    if (item.notes !== undefined && (descriptions.indexOf(item.notes) == -1))
+      noteString = item.notes;
+
+    for (var i = 0; i < parseInt(item.quantity); i++)
+      notes.push(noteString);
   });
 
   return JSON.stringify(notes);

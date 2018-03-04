@@ -12,6 +12,7 @@ function Worksheet(spreadsheet_id, worksheet_name) {
   this.spreadsheet = new ManagedSpreadsheet(spreadsheet_id);
   this.worksheet = this.spreadsheet.sheet(worksheet_name);
   this.order_states = [
+    'Cancelled',
     'Paid Online',
     'Present',
     'Labeled',
@@ -57,8 +58,23 @@ Worksheet.prototype.upsertTransaction = function (proposedOrder) {
     // the transaction has already been inserted; we need to update it
     var existingOrder = this.worksheet.getRowAsObject(rowIndex);  
     //we need to determine the relevant delta between new and old
+    
+    //first, check for refunds. If full refund is reported, change state of order to cancelled and return
+    
+    //if partial or no refund, we should update the order, labels, counts, etc. depending on state:
+    //states: cancelled (shouldn't happen, just skip)
+    //        paid online (leave state alone, update all fields)
+    //        present (leave state alone, update all fields)
+    //        labeled (
+    //        ready (
+    //        closed (update $ amount but do nothing else)
+    
+    //v1 payment API has refund data in it; each "refund" field has a type of 'FULL' or 'PARTIAL' 
+    //transaction metadata can show whether sum(tenders.amount_money) == sum(refunds.amount_money)
+    // if the sum is the same, the order was refunded and we should remove from the sheet
+    // if the sum isn't the same
     // what if there is a "reversion in state?"
-
+    console.warn("upsertTransaction: received an update to order " + proposedOrder['Payment ID'] + ": " + JSON.stringify(proposedOrder));
     //TODO: determine if refund, then delete row from table
   }
 }
@@ -108,6 +124,13 @@ Worksheet.prototype.printLabel = function(orderNumber, printerId, advanceState) 
 
   var order = this.worksheet.getRowAsObject(rowIndex);
   console.log("printLabel: order data from sheet: " + JSON.stringify(order));
+  
+  if (order['Last Name'] == "") {
+    var errMsg = 'printLabel: Missing last name for order: ' + orderNumber;
+    console.error(errMsg);
+    Browser.msgBox(errMsg);
+    return false;
+  }
 
   // retrieve filename from row
   if (order['Label Doc Link'] == "") {
@@ -270,6 +293,9 @@ Worksheet.prototype.updateNotesForOnlineOrders = function(onlineOrderData) {
 
     this.worksheet.updateCell(rowIndex,'Note on Order',JSON.stringify(notes));
 
-    //TODO: need to regenerate label doc for this cell now
+    //regenerate the labels now that we have the notes
+    var fmtLabel = new FormatLabel();
+    var newLabelUrl = fmtLabel.createLabelFileFromSheet(match[0]);
+    this.worksheet.updateCell(rowIndex,'Label Doc Link', newLabelUrl);
   });
 }

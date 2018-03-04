@@ -5,6 +5,7 @@ function test() {
 
 function squareAPI() {
   //TODO: replace with nodeJS package? https://docs.connect.squareup.com/articles/client-libraries#nodejsclientlibrary
+  this.default_location_id = 'D8BZ0GPZ20V86'; //default location id
 }
 
 squareAPI.prototype.call = function(url, params) {
@@ -103,7 +104,7 @@ squareAPI.prototype.TransactionMetadata = function (location_id, order_id, creat
   var customer_id = "";
   var note = "";
   
-  console.log("TransactionMetadata: Txn details: " + responseObj);
+  console.log("TransactionMetadata: Txn details: " + JSON.stringify(responseObj));
 
   // because we're searching on a time-based window, the call may return up to 50 transactions (via pagination).
   // we safely? assume that our transactional load is so low that we do not receive more than 50 transactions within the same second.

@@ -123,14 +123,14 @@ function menuItems() {
           serving: 'MEAL'
         }),
         'Mac & Cheese': new menuItem({
-          abbr: 'Mac&Cheese',
+          abbr: 'Mac & Cheese (Main)',
           ingredients: [
             new menuItemIngredient('Mac & Cheese', 1)
           ],
           serving: 'MEAL'
         }),
         'Grilled Cheese': new menuItem({
-          abbr: 'Gr. Cheese',
+          abbr: 'Grilled Cheese',
           ingredients: [
             new menuItemIngredient('Grilled Cheese', 1)
           ],
@@ -158,7 +158,7 @@ function menuItems() {
           serving: 'SIDE'
         }),
         'Mac & Cheese (Side)': new menuItem({
-          abbr: 'Mac&Chz',
+          abbr: 'Mac & Chz (Side)',
           ingredients: [
             new menuItemIngredient('Mac & Cheese', 0.5)
           ],

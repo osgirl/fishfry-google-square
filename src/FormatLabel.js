@@ -1,5 +1,5 @@
 function FormatLabel() {
-
+  this.api = new squareAPI();
 }
 
 /*
@@ -70,10 +70,11 @@ FormatLabel.prototype.formatLabelFromSquare = function(body, orderNumber, orderD
         sideItemName += " (Side)";
       
       var soupsString = "";
-      if (totalSoups > 0) {
-        //TODO: take this out... 
-        soupsString = pad('  ', totalSoups.toString(), true) + " Soups";
+      console.log("formatLabelFromSquare: totalSoups = " + totalSoups.toString());
+      if (parseInt(totalSoups) > 0) {
+        soupsString = "\t" + totalSoups.toString() + " Soup" + ((parseInt(totalSoups) > 1) ? "s" : "");
       }
+      console.log("formatLabelFromSquare: soupsString = " + soupsString);
       var line4 = body
         .appendParagraph(menu.items[sideItemName].abbr + soupsString)
         .setFontFamily(font)
@@ -87,7 +88,7 @@ FormatLabel.prototype.formatLabelFromSquare = function(body, orderNumber, orderD
         .setFontFamily(font)
         .setBold(false)
         .setFontSize(10)
-        .setAlignment(DocumentApp.HorizontalAlignment.LEFT);
+        .setAlignment(DocumentApp.HorizontalAlignment.RIGHT);
 
       mealCount++;
       if (mealCount < totalMeals) {
@@ -127,11 +128,14 @@ FormatLabel.prototype.createLabelFile = function(orderNumber, orderDetails, cust
 /*
  * Create label from Sheet data
  */
-FormatLabel.prototype.createLabelFileFromSheet = function(orderDetails) {
+FormatLabel.prototype.createLabelFileFromSheet = function(orderSheetData, location_id) {
+  if (location_id === undefined || isEmpty(locationId))
+     location_id  = this.api.default_location_id;
   //As Order Number and Last name should be globally unique, this should make it easy to find in the Drive folder
-  var editableLabelDoc = this.newLabelTemplate("Order " + orderDetails['Order Number'] + ": " + orderDetails['Last Name']);
-  var body = editableLabelDoc.getBody();
-  this.formatLabelFromSheet(body, orderDetails);
+  var editableLabelDoc = this.newLabelTemplate("Order " + orderSheetData['Order Number'] + ": " + orderSheetData['Last Name']);
+  var body = editableLabelDoc.getBody().setText('');
+  var squareOrderDetails = this.api.OrderDetails(location_id, orderSheetData['Payment ID']);
+  this.formatLabelFromSquare(body, orderSheetData['Order Number'], squareOrderDetails, orderSheetData['Last Name'], JSON.parse(orderSheetData['Note on Order']), parseInt(orderSheetData['Total Meals']), parseInt(orderSheetData['Total Soups']));
   var url = editableLabelDoc.getUrl();
   editableLabelDoc.saveAndClose();
   return url;

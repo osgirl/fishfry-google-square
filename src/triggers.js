@@ -22,14 +22,51 @@ function onOpen() {
     .addItem('Authorization URL', 'testPrinterAccess')
     .addItem('Show Printers', 'showPrinters')
     .addToUi();
-
   //TODO: validate/install triggers
+}
+
+// this must be an installed trigger as simple triggers do not have external permissions
+function onEditInstalled(e){
+  var editedRange = e.range;
+  
+  // skip if edits are made on any other sheet other than the transaction log
+  if (editedRange.getSheet().getName() !== "Current Event Transaction Log"){
+    return;
+  }
+  
+  // if its a large edit, log and skip
+  if ((editedRange.getNumRows() > 1) || (editedRange.getNumColumns() > 1)){
+    Browser.msgBox("onEdit: trigger cannot handle this large of an edit!");
+    console.log("onEdit: can't handle this large of an edit - " + editedRange.getA1Notation());
+    return;
+  }
+  else {
+    var cell = editedRange.getA1Notation();  
+    var column   = cell.replace(/[^a-zA-Z]/gi,'');
+    var rowIndex = cell.replace(/[a-zA-Z]/gi,'');
+    
+    //this fails because of permissions issues. 
+    var worksheet = new ManagedWorksheet(editedRange.getSheet().getParent(), editedRange.getSheet().getName());
+       
+    // if edit is in last name, or note - regenerate label doc
+    if ((worksheet.getColumnLetter("Last Name") == column) ||
+        (worksheet.getColumnLetter("Note on Order") == column)) {
+      var orderDetails = worksheet.getRowAsObject(rowIndex);
+      console.log("onEdit: received update for " + cell + "; regenerating label doc");
+      
+      var formatLabel = new FormatLabel();
+      var url = formatLabel.createLabelFileFromSheet(orderDetails);
+      console.log("onEdit: new label doc for " + cell + ": " + url);
+      
+      worksheet.updateCell(rowIndex, 'Label Doc Link', url);
+    }
+  }
 }
 
 function pullPaymentsOff() {
   // Delete existing triggers
-  // TODO: this blindly deletes ALL triggers
-  var triggers = ScriptApp.getProjectTriggers();
+  // TODO: this blindly deletes ALL clock triggers
+  var clockTriggers = ScriptApp.getProjectTriggers().filter(function (trigger) { return trigger.getEventType() === Trigger.CLOCK; });
   for(var i in triggers) {
     ScriptApp.deleteTrigger(triggers[i]);
   }
@@ -56,7 +93,7 @@ function pullSquarePayments() {
   var payments = api.pullPaymentsSince(new Date().toISOString());
   for (var i in payments) {
     //TODO: we don't have access to the location_id... will this still work if we use 'me'?
-    var order = fmt.SquareTransactionToSheet('me', payments[i].id);
+    var order = fmt.SquareTransactionToSheet(api.default_location_id, payments[i].id);
     upsertTransaction(order);
   }
 }
@@ -108,7 +145,6 @@ function showClosingSidebar() {
   SpreadsheetApp.getUi().showSidebar(htmlOutput);
 }
 
-
 function testPrinterAccess() {
   var printer = new Printer();
   Browser.msgBox(printer.showAuthorizationURL());
@@ -131,9 +167,7 @@ function showPrinters(returnList) {
 function printLabel(order_id, printer_id) {
   var worksheet = new Worksheet();
   // the following call will print label & advance state
-  if (worksheet.printLabel(order_id, printer_id)) {
-    Browser.msgBox("Print successful for: " + order_id);
-  }
+  worksheet.printLabel(order_id, printer_id);
 }
 
 function reprintLabel(order_id, printer_id) {

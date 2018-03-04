@@ -60,22 +60,28 @@
   </fieldset>
 </div>
 <div class="printDiv">
-  <fieldset>
+ <form>
+   <fieldset>
     <legend>Print Labels:</legend>
     <input type="number" min="0" max="9999" name="print" id="PrintOrderNumber" placeholder="e.g. 2047"/>
     <input type="button" name="print" value="Print" onclick="printLabel();"/>
+    <input type="submit" name="print" tabindex="-1" style="width: 0px;height: 0px;border: none"/>
     <!--upon submit, clear field -->
-  </fieldset>
+    </fieldset>
+  </form>
 </div>
 
 <div class="reprintDiv">
-  <fieldset>
-    <legend>Reprint Labels:</legend>
-    <i>Note: reprinting labels will not change the order's state</i><br/>
-    <input type="number" min="0" max="9999" name="reprint" id="ReprintOrderNumber" placeholder="e.g. 2051"/>
-    <input type="button" name="reprint" value="Reprint" onclick="reprintLabel();"/>
-    <!--upon submit, clear field -->
-  </fieldset>
+  <form>
+    <fieldset>
+      <legend>Reprint Labels:</legend>
+      <i>Note: reprinting labels will not change the order's state</i><br/>
+      <input type="number" min="0" max="9999" name="reprint" id="ReprintOrderNumber" placeholder="e.g. 2051"/>
+      <input type="button" name="reprint" value="Reprint" onclick="reprintLabel();"/>
+      <input type="submit" name="reprint" tabindex="-1" style="width: 0px;height: 0px;border: none"/>
+      <!--upon submit, clear field -->
+    </fieldset>
+  </form>
 </div>
 </div>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
@@ -83,17 +89,23 @@
 <script>
 //TODO: onchange of radio-1 - apply filter on list
 //TODO: write function that will call GAS to invoke cloud print API, change order state, remove from list
-  $( function() {
-//    $( "input" ).checkboxradio();
-//    $( "fieldset" ).controlgroup();
-  } );
-
-  //TODO: should wait until document is "ready"?
-  // get a list of available printers
-  google.script.run.withSuccessHandler(printersAvailable).showPrinters(true);
+  $(document).ready(function() {
+    $(".printDiv :input").keypress(function(event) {
+      if (event.which == 13){
+        printLabel();
+      }
+    });
+    $(".reprintDiv :input").keypress(function(event) {
+      if (event.which == 13){
+        reprintLabel();
+      }
+    });
+    // get a list of available printers
+    google.script.run.withSuccessHandler(printersAvailable).showPrinters(true);
+  });
 
   function printersAvailable(arg) {
-  console.log(arg);
+    console.log(arg);
     var select = document.getElementById('printerOptions');
     for (var i in arg) {
       var option = document.createElement('option');
@@ -146,6 +158,7 @@
     document.getElementById('PrintOrderNumber').value = '';
     document.getElementById('ReprintOrderNumber').value = '';
     $(":input").prop("disabled", false);
+    document.getElementById('PrintOrderNumber').focus();
   }
   function onFailure(e){
     $("#spinner").hide();
@@ -153,6 +166,7 @@
     document.getElementById('PrintOrderNumber').value = '';
     document.getElementById('ReprintOrderNumber').value = '';
     $(":input").prop("disabled", false);
+    document.getElementById('PrintOrderNumber').focus();
   }
 
 </script>
