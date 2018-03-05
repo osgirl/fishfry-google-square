@@ -65,9 +65,9 @@ function onEditInstalled(e){
 function pullPaymentsOff() {
   // Delete existing triggers
   // TODO: this blindly deletes ALL clock triggers
-  var clockTriggers = ScriptApp.getProjectTriggers().filter(function (trigger) { return trigger.getEventType() === Trigger.CLOCK; });
-  for(var i in triggers) {
-    ScriptApp.deleteTrigger(triggers[i]);
+  var clockTriggers = ScriptApp.getProjectTriggers().filter(function (trigger) { return trigger.getEventType() === ScriptApp.EventType.CLOCK; });
+  for(var i in clockTriggers) {
+    ScriptApp.deleteTrigger(clockTriggers[i]);
   }
 
   Browser.msgBox("Script successfully deleted all scheduled triggers.");
@@ -79,7 +79,7 @@ function pullPaymentsOn() {
   // Create new trigger to run hourly.
   ScriptApp.newTrigger("pullSquarePayments")
     .timeBased()
-    .everyMinutes(2)
+    .everyMinutes(5)
     .create();
 
   Browser.msgBox("Script successfully scheduled to run every minute.");
@@ -89,10 +89,11 @@ function pullSquarePayments() {
   var worksheet = new Worksheet();
   var fmt = new FormatOrder();
   var api = new squareAPI();
-  var payments = api.pullPaymentsSince(new Date().toISOString());
+  var payments = api.pullPaymentsSince(new Date("2018-03-05T23:59:00Z").toISOString());
   for (var i in payments) {
+    console.log({message: "pullSquarePayments: payment found", data: payments[i]});
     var order = fmt.SquareTransactionToSheet(api.default_location_id, payments[i].id);
-    upsertTransaction(order);
+    worksheet.upsertTransaction(order);
   }
 }
 

@@ -86,7 +86,7 @@ FormatOrder.prototype.SquareTransactionToSheet = function (location_id, payment_
   var orderDetails = this.api.OrderDetails(payment_id);
   var txnMetadata = this.api.TransactionMetadata(location_id, payment_id, orderDetails.created_at);
   var sleepTimer = 1000;
-  while (txnMetadata.customer_id == undefined && sleepTimer <= 16000){
+  while (txnMetadata.customer_id == undefined && sleepTimer <= 8000){
     console.log("SquareTransactionToSheet: didnt find customer name, trying again");
     txnMetadata = this.api.TransactionMetadata(location_id, payment_id, orderDetails.created_at);
     Utilities.sleep(sleepTimer);
