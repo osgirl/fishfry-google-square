@@ -1,5 +1,5 @@
 function Worksheet(spreadsheet_id, worksheet_name) {
-  var spreadsheet_id = ScriptProperties.getProperty("ssId");
+  var spreadsheet_id = PropertiesService.getScriptProperties().getProperty("ssId");
   if (spreadsheet_id === null || spreadsheet_id == undefined) {
     spreadsheet_id = '1NbNqn87RH-T9CoScqKejJlSxOo_CW4VMUnDKzgcE8TU';
   }

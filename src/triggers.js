@@ -79,7 +79,7 @@ function pullPaymentsOn() {
   // Create new trigger to run hourly.
   ScriptApp.newTrigger("pullSquarePayments")
     .timeBased()
-    .everyMinutes(5)
+    .everyMinutes(1)
     .create();
 
   Browser.msgBox("Script successfully scheduled to run every minute.");
@@ -90,10 +90,18 @@ function pullSquarePayments() {
   var fmt = new FormatOrder();
   var api = new squareAPI();
   var payments = api.pullPaymentsSince(new Date("2018-03-05T23:59:00Z").toISOString());
+  //pull all entries in Payment ID column 
+  var knownPaymentIDs = worksheet.worksheet.indices('Payment ID');
   for (var i in payments) {
-    console.log({message: "pullSquarePayments: payment found", data: payments[i]});
-    var order = fmt.SquareTransactionToSheet(api.default_location_id, payments[i].id);
-    worksheet.upsertTransaction(order);
+    if ((knownPaymentIDs.indexOf(payments[i].id) == -1) || // we dont know about this transaction
+        (payments[i].refunds.length > 0)) { // we know about it but there is a refund attached
+      console.log({message: "pullSquarePayments: relevant payment found", data: payments[i]});
+      var order = fmt.SquareTransactionToSheet(api.default_location_id, payments[i].id);
+      worksheet.upsertTransaction(order);
+    }
+    else {
+      console.log({message: "pullSquarePayments: payment already found and no refunds pending; skipping " + payments[i].id});
+    }
   }
 }
 

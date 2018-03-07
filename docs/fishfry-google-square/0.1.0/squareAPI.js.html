@@ -96,10 +96,14 @@ function squareAPI() {
   this.default_location_id = 'D8BZ0GPZ20V86'; //default location id
 }
 
-squareAPI.prototype.call = function(url, params) {
+squareAPI.prototype.call = function(url, params, paginate) {
   if (params == undefined || params == null) {
     params = {};
   }
+  if (paginate == undefined || paginate == null) {
+    paginate = true; //default to true for square
+  }
+
   // always include authorization in header
   if (!('headers' in params)) {
     params['headers'] = {
@@ -107,7 +111,7 @@ squareAPI.prototype.call = function(url, params) {
     }
   }
 
-  var response = loggedUrlFetch(url, params);
+  var response = loggedUrlFetch(url, params, paginate);
   if (isEmpty(response)) {
     console.error("squareAPI.call: invoking square API failed");
     return "";
