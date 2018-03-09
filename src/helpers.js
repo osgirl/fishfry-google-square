@@ -44,10 +44,10 @@ function loggedUrlFetch(url, params, paginate) {
     console.log("loggedUrlFetch: invoking url " + url);
     var response = UrlFetchApp.fetch(url, params);
     console.log({message:"loggedUrlFetch: response", initialData: response});
-    
+
     if (paginate) {
       /*check for pagination; depends on square API version*/
-      
+
       //https://docs.connect.squareup.com/api/connect/v1#pagination
       if (url.indexOf('connect.squareup.com/v1') != -1) {
         var link = response.getHeaders().Link;
@@ -57,7 +57,7 @@ function loggedUrlFetch(url, params, paginate) {
           console.log({message: "loggedUrlFetch: more v1 results available, fetching additional pages", url: nextUrl});
           // this is a recursive call, that will unwind with all things in same array
           var nextResponse = loggedUrlFetch(nextUrl,params,paginate);
-          
+
           // merge response & next response together
           // v1 APIs will respond with arrays, so concat them
           var responseObj = JSON.parse(response.getContentText());
@@ -67,7 +67,7 @@ function loggedUrlFetch(url, params, paginate) {
           return JSON.parse(response.getContentText());
         }
       }
-      
+
       //https://docs.connect.squareup.com/api/connect/v2#paginatingresults
       else if (url.indexOf('connect.squareup.com/v2') != -1) {
         //v2 APIs respond with a single object, with arrays as properties
@@ -79,7 +79,7 @@ function loggedUrlFetch(url, params, paginate) {
 
           // this is a recursive call, that will unwind below
           var nextResponse = loggedUrlFetch(nextUrl,params,paginate);
-          
+
           // merge response & next response together
           // v2 APIs will respond with objects, so you need to find the nested arrays and concat them
           for (var i in nextResponse) {

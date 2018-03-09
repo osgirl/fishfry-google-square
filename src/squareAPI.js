@@ -14,7 +14,7 @@ squareAPI.prototype.call = function(url, params, paginate) {
   if (paginate == undefined || paginate == null) {
     paginate = true; //default to true for square
   }
-    
+
   // always include authorization in header
   if (!('headers' in params)) {
     params['headers'] = {
@@ -152,9 +152,24 @@ squareAPI.prototype.pullPaymentsSince = function(sinceX) {
  *   https://docs.connect.squareup.com/api/connect/v1#datatype-item
  * @throws Will throw an error if the API call to Square is not successful for any reason
  */
-squareAPI.prototype.itemCatalog = function(){
+squareAPI.prototype.itemCatalog = function(useCache){
+  if (useCache == undefined || useCache == null) {
+    useCache = true; //default to true for item catalog
+  }
+
+  var cache = CacheService.getDocumentCache();
+  if (useCache) {
+    var cached = cache.get("square-item-catalog");
+    if (cached != null) {
+      return JSON.parse(cached);
+    }
+  }
   var url = "https://connect.squareup.com/v1/" + this.default_location_id + "/items";
-  return this.call(url);
+  var response = this.call(url);
+  if (useCache) {
+    cache.put("square-item-catalog", JSON.stringify(response), 3600);// cache for 1 hour
+  }
+  return response;
 }
 
 var api = squareAPI();

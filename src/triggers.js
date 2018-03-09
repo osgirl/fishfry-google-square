@@ -90,7 +90,7 @@ function pullSquarePayments() {
   var fmt = new FormatOrder();
   var api = new squareAPI();
   var payments = api.pullPaymentsSince(new Date("2018-03-05T23:59:00Z").toISOString());
-  //pull all entries in Payment ID column 
+  //pull all entries in Payment ID column
   var knownPaymentIDs = worksheet.worksheet.indices('Payment ID');
   for (var i in payments) {
     if ((knownPaymentIDs.indexOf(payments[i].id) == -1) || // we dont know about this transaction
