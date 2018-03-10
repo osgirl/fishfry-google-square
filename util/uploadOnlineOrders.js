@@ -14,6 +14,12 @@ if (process.argv.length !== 4) {
 var parser = csv.parse({columns:true}, function(err, data){
 
   //console.log(data);
+  var toSend = data.filter(function(order) {
+    if (order['Note'] !== "")
+      return true;
+  });
+
+  //console.log(toSend.length);
 
   var url = new URL(process.argv[3]);
   //put queryParam of 'uploadOnlineOrderData' on url
@@ -28,7 +34,7 @@ var parser = csv.parse({columns:true}, function(err, data){
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Content-Length': Buffer.byteLength(JSON.stringify(data))
+      'Content-Length': Buffer.byteLength(JSON.stringify(toSend))
     }
   };
 
@@ -41,9 +47,10 @@ var parser = csv.parse({columns:true}, function(err, data){
     });
   });
 
-  req.write(JSON.stringify(data));
+  req.write(JSON.stringify(toSend));
 
   req.end();
+
 });
 
 fs.createReadStream(process.argv[2]).pipe(parser);
