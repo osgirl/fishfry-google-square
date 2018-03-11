@@ -143,8 +143,6 @@ squareAPI.prototype.OrderDetails = function(order_id){
  *
  * @param {string} location_id
  *   Location ID corresponding to Square Location
- * @param {string} order_id
- *   Order ID corresponding to Square Payment object
  * @param {string} created_at
  *   date when the order was created in RFC3339 format (e.g. 2016-01-15T00:00:00Z)
  * @returns {object} payment object from Square V2 API
@@ -152,10 +150,11 @@ squareAPI.prototype.OrderDetails = function(order_id){
  * @throws Will throw an error if the transaction can not be found or
  *         if the API call to Square is not successful for any reason
  */
-squareAPI.prototype.TransactionDetails = function(location_id, order_id, created_at) {
+squareAPI.prototype.TransactionDetails = function(location_id, created_at) {
   // when sort_order parameter is ASC, the results will be inclusive of the record we're looking for.
   var url = "https://connect.squareup.com/v2/locations/" + location_id + "/transactions?begin_time=" + created_at + "&amp;sort_order=ASC";
-  return this.call(url);
+  // we do not want to paginate here as the transaction we're looking for should be the first in the response
+  return this.call(url, null, false);
 }
 
 
@@ -187,7 +186,7 @@ squareAPI.prototype.CustomerFamilyName = function(customer_id) {
 }
 
 squareAPI.prototype.TransactionMetadata = function (location_id, order_id, created_at) {
-  var responseObj = this.TransactionDetails(location_id, order_id, created_at);
+  var responseObj = this.TransactionDetails(location_id, created_at);
   // the Square V1 API returns the payment information;
   // the Square V2 API nests this data underneath a transaction object
   var origin = "";

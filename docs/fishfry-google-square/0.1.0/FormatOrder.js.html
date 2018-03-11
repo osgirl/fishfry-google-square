@@ -186,10 +186,10 @@ FormatOrder.prototype.SquareTransactionToSheet = function (location_id, payment_
   if (txnMetadata.customer_id !== undefined){
     lastName = this.api.CustomerFamilyName(txnMetadata.customer_id);
   }
-  return this.ConvertSquareToSheet(location_id, txnMetadata, orderDetails, lastName);
+  return this.ConvertSquareToSheet(txnMetadata, orderDetails, lastName);
 }
 
-FormatOrder.prototype.ConvertSquareToSheet = function(location_id, txnMetadata, orderDetails, lastName) {
+FormatOrder.prototype.ConvertSquareToSheet = function(txnMetadata, orderDetails, lastName) {
   // convert Square schema to Sheet schema
   var order = new menuItems();
   orderDetails.itemizations.forEach( function (item) {
@@ -234,6 +234,7 @@ FormatOrder.prototype.ConvertSquareToSheet = function(location_id, txnMetadata, 
   var result = {
     "Order Number": orderNumber,
     "Payment ID": orderDetails.id,
+    "Payment ID Prefix": orderDetails.id.substring(0,4),
     "Total Amount": parseInt(orderDetails.total_collected_money.amount)/100,
     "Order Received Date/Time": convertISODate(new Date(orderDetails.created_at)),
     "Last Name": lastName,
