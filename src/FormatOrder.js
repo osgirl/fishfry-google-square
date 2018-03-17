@@ -80,7 +80,6 @@ FormatOrder.prototype.getStateFromOrigin = function (origin){
  * @param {string} payment_id
  *   Order ID corresponding to Square Payment object
  */
-//Order.prototype.upsertTransactionLog = function (location_id, payment_id){
 FormatOrder.prototype.SquareTransactionToSheet = function (location_id, payment_id) {
   // try to get updated order details from Square
   var orderDetails = this.api.OrderDetails(payment_id);
@@ -92,15 +91,15 @@ FormatOrder.prototype.SquareTransactionToSheet = function (location_id, payment_
     Utilities.sleep(sleepTimer);
     sleepTimer *= 2;
   }
-  var lastName = "";
-  // don't bother calling to get a last name if we don't have the customer ID
+  var customerName = "";
+  // don't bother calling to get a customer name if we don't have the customer ID
   if (txnMetadata.customer_id !== undefined){
-    lastName = this.api.CustomerFamilyName(txnMetadata.customer_id);
+    customerName = this.api.CustomerName(txnMetadata.customer_id);
   }
-  return this.ConvertSquareToSheet(txnMetadata, orderDetails, lastName);
+  return this.ConvertSquareToSheet(txnMetadata, orderDetails, customerName);
 }
 
-FormatOrder.prototype.ConvertSquareToSheet = function(txnMetadata, orderDetails, lastName) {
+FormatOrder.prototype.ConvertSquareToSheet = function(txnMetadata, orderDetails, customerName) {
   // convert Square schema to Sheet schema
   var order = new menuItems();
   orderDetails.itemizations.forEach( function (item) {
@@ -144,14 +143,15 @@ FormatOrder.prototype.ConvertSquareToSheet = function(txnMetadata, orderDetails,
   // format data for Sheet
   var result = {
     "Order Number": orderNumber,
+    'Odd / Even': (orderNumber % 2) === 0 ? 'Even' : 'Odd',
     "Payment ID": orderDetails.id,
     "Payment ID Prefix": orderDetails.id.substring(0,4),
     "Total Amount": parseInt(orderDetails.total_collected_money.amount)/100,
     "Order Received Date/Time": convertISODate(new Date(orderDetails.created_at)),
-    "Last Name": lastName,
+    "Customer Name": customerName,
     "Expedite": "No",
     "Note on Order": notes,
-    "Label Doc Link": fmtLabel.createLabelFile(orderNumber, orderDetails, lastName, JSON.parse(notes), mealCount, soupCount),
+    "Label Doc Link": fmtLabel.createLabelFile(orderNumber, orderDetails, customerName, JSON.parse(notes), mealCount, soupCount),
     "Order Venue": (this.getStateFromOrigin(txnMetadata.origin) == "Present") ? "In Person" : "Online",
     "Order State": this.getStateFromOrigin(txnMetadata.origin),
     "Square Receipt Link": orderDetails.receipt_url,

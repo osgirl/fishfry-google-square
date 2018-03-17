@@ -47,8 +47,8 @@ function onEditInstalled(e){
 
     var worksheet = new ManagedWorksheet(editedRange.getSheet().getParent(), editedRange.getSheet().getName());
 
-    // if edit is in last name, or note - regenerate label doc
-    if ((worksheet.getColumnLetter("Last Name") == column) ||
+    // if edit is in customer name, or note - regenerate label doc
+    if ((worksheet.getColumnLetter("Customer Name") == column) ||
         (worksheet.getColumnLetter("Note on Order") == column)) {
       var orderDetails = worksheet.getRowAsObject(rowIndex);
       console.log("onEdit: received update for " + cell + "; regenerating label doc");
@@ -89,20 +89,31 @@ function pullSquarePayments() {
   var worksheet = new Worksheet();
   var fmt = new FormatOrder();
   var api = new squareAPI();
-  var payments = api.pullPaymentsSince(new Date("2018-03-05T23:59:00Z").toISOString());
+  var payments = api.pullPaymentsSince(getStartOrderSearchTime().toISOString());
   //pull all entries in Payment ID column
   var knownPaymentIDs = worksheet.worksheet.indices('Payment ID');
-  for (var i in payments) {
-    if ((knownPaymentIDs.indexOf(payments[i].id) == -1) || // we dont know about this transaction
-        (payments[i].refunds.length > 0)) { // we know about it but there is a refund attached
-      console.log({message: "pullSquarePayments: relevant payment found", data: payments[i]});
-      var order = fmt.SquareTransactionToSheet(api.default_location_id, payments[i].id);
-      worksheet.upsertTransaction(order);
+  //make 2 passes to minimize likelihood of collisions
+  //pass1: do the filtering before trying to upsert anything
+  payments = payments.filter( function (payment) {
+    //we don't know about this transaction OR we know about it and there is a refund attached
+    if ((knownPaymentIDs.indexOf(payment.id) == -1) || (payment.refunds.length > 0)){
+      console.log({message: "pullSquarePayments: relevant payment found", data: payment});
+      return true;
     }
     else {
-      console.log({message: "pullSquarePayments: payment already found and no refunds pending; skipping " + payments[i].id});
+      console.log({message: "pullSquarePayments: payment already found and no refunds pending; skipping " + payment.id});
+      return false;
     }
-  }
+  });
+
+  //pass 2: try to upsert each one
+  // it is still possible that in between the API call to square above and now that a webhook would have fired
+  // duplicate entries for the same Square ID are protected inside upsertTransaction with a lock
+  payments.forEach( function(payment) {
+    var order = fmt.SquareTransactionToSheet(api.default_location_id, payment.id);
+    console.log({message: "pullSquarePayments: attempting upsert for payment", data: payment, order: order});
+    worksheet.upsertTransaction(order);
+  });
 }
 
 function simulateNewOrder() {

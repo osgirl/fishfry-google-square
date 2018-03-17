@@ -6,7 +6,7 @@
  * @returns {string} formatted date
  */
 function convertISODate(date){
-  return Utilities.formatDate(date, "EST", "MM/dd/yyyy hh:mma");
+  return Utilities.formatDate(date, SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone(), "MM/dd/yyyy hh:mma");
 }
 
 function pad(pad, str, padLeft) {
@@ -115,4 +115,25 @@ function isEmpty(obj) {
     }
 
     return JSON.stringify(obj) === JSON.stringify({});
+}
+
+function getGlobals(){
+  var worksheet = new Worksheet(null, "Globals");
+  var all = worksheet.worksheet.all();
+  var result = {};
+  // create and return a dictionary from this sheet
+  all.forEach(function(kvp) {
+    result[kvp["Key"]] = kvp["Value"];
+  });
+  return result;
+}
+
+// pulls value from globals
+function getStartOrderSearchTime() {
+  return new Date(getGlobals()["Start Order Search Time"]);
+}
+
+// pulls value from globals
+function getLabelFolderName() {
+  return getGlobals()["Label Folder Name"];
 }

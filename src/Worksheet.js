@@ -42,134 +42,151 @@ Worksheet.prototype.searchForTransaction = function(column, value) {
  *
  * @param {object} proposedOrder
  *   proposed Order in Sheet object schema to be committed to transaction log
+ * @param {object} paymentData
+ *   proposed Order in Square object schema that was source for Sheet object order
  */
-Worksheet.prototype.upsertTransaction = function (proposedOrder) {
-  var rowIndex = this.searchForTransaction('Payment ID', proposedOrder['Payment ID']);
-  
-  if (rowIndex == -1) {
-    // the transaction hasn't been inserted yet; let's just insert it
-    this.worksheet.append(proposedOrder);
+Worksheet.prototype.upsertTransaction = function (proposedOrder, paymentData) {
+  var lock = LockService.getScriptLock();
+  while (!lock.tryLock(1000)) {
+    console.log ('upsertTransaction: failed getting script lock, trying again');
+  }
+  try {
+    // we have the lock if we've gotten this far
+    var rowIndex = this.searchForTransaction('Payment ID', proposedOrder['Payment ID']);
 
-    //set formula for wait time columns for the row you just inserted
-    if (proposedOrder['Order State'] == "Present") {
-      // fetch rowIndex again because it should be in spreadsheet now
-      rowIndex = this.searchForTransaction('Payment ID', proposedOrder['Payment ID']);
-      this.updateWaitTimeFormulas(rowIndex);
-    }
-  } else {
-    // the transaction has already been inserted; we may need to update it
-    var existingOrder = this.worksheet.getRowAsObject(rowIndex);  
-    console.warn({message:"upsertTransaction: received an update to order " + proposedOrder['Payment ID'] + ": ", initialData: proposedOrder});
+    if (rowIndex == -1) {
+      // the transaction hasn't been inserted yet; let's just insert it
+      this.worksheet.append(proposedOrder);
 
-    // reasons we'd be here:
-    // (1) we're polling square instead of dealing with webhooks
-    //     - in this case, the common path is that we don't need to make any changes
-    // (2) we got a webhook for a payment update (refund)
-    
-    if (existingOrder['Order State'] == "Cancelled") {
-      console.log("upsertTransaction: payment " + proposedOrder['Payment ID'] + " has already been cancelled; skipping");
-      return;
-    }
+      //set formula for wait time columns for the row you just inserted
+      if (proposedOrder['Order State'] == "Present") {
+        // fetch rowIndex again because it should be in spreadsheet now
+        rowIndex = this.searchForTransaction('Payment ID', proposedOrder['Payment ID']);
+        this.updateWaitTimeFormulas(rowIndex);
+      }
+    } else {
+      // the transaction has already been inserted; we may need to update it
+      var existingOrder = this.worksheet.getRowAsObject(rowIndex);
+      console.warn({message:"upsertTransaction: received an update to order " + proposedOrder['Payment ID'] + ": ", initialData: proposedOrder});
 
-    // actions to take: check for refunds associated with this payment ID
-    var api = new squareAPI();
-    var paymentData = api.OrderDetails(proposedOrder['Payment ID']);
-    
-    if (paymentData.refunds.length == 0){
-      // did not find refunds, simply return
-      console.log("upsertTransaction: did not find any refunds for payment " + proposedOrder['Payment ID'] + "; skipping");
-      return;
-    }
-    else {
-      var fullRefund = false;
-      // either we will see a FULL refund type or the sum of all partial refunds == the total collected money
-      if ((paymentData.refunds.filter(function (refund) { return refund.type == "FULL"; }).length > 0) ||
-          (parseInt(paymentData.total_collected_money.amount) == Math.abs(parseInt(paymentData.refunded_money.amount))))
-        fullRefund = true;
+      // reasons we'd be here:
+      // (1) we're polling square instead of dealing with webhooks
+      //     - in this case, the common path is that we don't need to make any changes
+      // (2) we got a webhook for a payment update (refund)
 
-      var currentState = existingOrder['Order State'];
-
-      //compute new total amount
-      var newAmount = (parseInt(paymentData.total_collected_money.amount) +
-                       parseInt(paymentData.refunded_money.amount))/100;//refunded money is a negative #
-      if (newAmount == parseInt(existingOrder['Total Amount'])){
-        console.log("upsertTransaction: received refund webhook but it appears we're up to date.. skipping");
+      if (existingOrder['Order State'] == "Cancelled") {
+        console.log("upsertTransaction: payment " + proposedOrder['Payment ID'] + " has already been cancelled; skipping");
         return;
       }
 
-      // find the "latest" refund as we (correctly?) assume that all prior refunds have been processed.
-      var refund = paymentData.refunds.sort(function compare(a,b) {
-        var aDate = new Date(a.created_at);
-        var bDate = new Date(b.created_at);
-        // a < b
-        if (aDate < bDate) {
-          return 1; // we want this in desc order
-        }
-        // a > b
-        if (aDate > bDate) {
-          return -1;// we want this in desc order
-        }
-        // a must be equal to b
-        return 0;
-      })[0];
-
-      if (fullRefund) {
-        // if full refund, we should act dependent on existing order state:
-        // states: cancelled (do nothing, we should have bailed above)
-        //         paid online|present (change state to cancelled)
-        //         labeled|ready|closed (leave state alone, update only total amount)
-        if ((currentState == "Paid Online") || (currentState == "Present")) {
-          console.log("upsertTransaction: detected full refund, cancelling order");
-          this.worksheet.updateCell(rowIndex,'Order State', 'Cancelled');
-          this.worksheet.updateCell(rowIndex,'Total Amount', newAmount);
-          //delete meals/soups/serving counts for this transaction
-          this.worksheet.updateCell(rowIndex,'Total Meals', 0);
-          this.worksheet.updateCell(rowIndex,'Total Soups', 0);
-          this.worksheet.updateCell(rowIndex,'Fried Fish', 0);
-          this.worksheet.updateCell(rowIndex,'Baked Fish', 0);
-          this.worksheet.updateCell(rowIndex,'Fried Shrimp', 0);
-          this.worksheet.updateCell(rowIndex,'Baked Shrimp', 0);
-          this.worksheet.updateCell(rowIndex,'Mac & Cheese', 0);
-          this.worksheet.updateCell(rowIndex,'Grilled Cheese', 0);
-          this.worksheet.updateCell(rowIndex,'French Fries', 0);
-          this.worksheet.updateCell(rowIndex,'Red Potato', 0);
-          this.worksheet.updateCell(rowIndex,'Soup', 0);
-
-        }
-        else if (currentState !== "Cancelled") {
-          console.log("upsertTransaction: detected full refund, order has already been processed so setting total to " + newAmount);
-          this.worksheet.updateCell(rowIndex,'Total Amount', newAmount);
-        }
+      // actions to take: check for refunds associated with this payment ID
+      if ((paymentData === undefined) || (paymentData == null)){
+        var api = new squareAPI();
+        paymentData = api.OrderDetails(proposedOrder['Payment ID']);
+      }
+      if (paymentData.refunds.length == 0){
+        // did not find refunds, simply return
+        console.log("upsertTransaction: did not find any refunds for payment " + proposedOrder['Payment ID'] + "; skipping");
+        return;
       }
       else {
-        // if partial refund, we should act dependent on existing order state:
-        // states: cancelled (do nothing, we should have bailed above)
-        //         all other states (leave state alone, update only total amount)
-        //
-        // we can not explicitly update the meal counts/servings/etc as Square does not update the itemization based on the refund
+        var fullRefund = false;
+        // either we will see a FULL refund type or the sum of all partial refunds == the total collected money
+        if ((paymentData.refunds.filter(function (refund) { return refund.type == "FULL"; }).length > 0) ||
+            (parseInt(paymentData.total_collected_money.amount) == Math.abs(parseInt(paymentData.refunded_money.amount))))
+          fullRefund = true;
+
+        var currentState = existingOrder['Order State'];
 
         //compute new total amount
-        console.log("upsertTransaction: detected partial refund, setting total to " + newAmount);
-
-        if (currentState !== "Cancelled") {
-          this.worksheet.updateCell(rowIndex,'Total Amount', newAmount);
+        var newAmount = (parseInt(paymentData.total_collected_money.amount) +
+                         parseInt(paymentData.refunded_money.amount))/100;//refunded money is a negative #
+        if (newAmount == parseInt(existingOrder['Total Amount'])){
+          console.log("upsertTransaction: received refund webhook but it appears we're up to date.. skipping");
+          return;
         }
-      }
 
-      var refundsSheet = new Worksheet(null,"Refunds");
-      var refundObject = {
-        'Order Number': existingOrder['Order Number'],
-        'Square Payment ID': existingOrder['Payment ID'],
-        'Receipt URL': existingOrder['Square Receipt Link'],
-        'State When Refunded': existingOrder['Order State'],
-        'Total Amount': existingOrder['Total Amount'],
-        'Refund Amount': Math.abs(parseInt(refund.refunded_money.amount)/100),
-        'Reason for Refund': refund.reason,
-        'Refund Type': refund.type,
-        'Time of Refund': convertISODate(new Date(refund.created_at))
-      };
-      refundsSheet.worksheet.append(refundObject);
+        // find the "latest" refund as we (correctly?) assume that all prior refunds have been processed.
+        var refund = paymentData.refunds.sort(function compare(a,b) {
+          var aDate = new Date(a.created_at);
+          var bDate = new Date(b.created_at);
+          // a < b
+          if (aDate < bDate) {
+            return 1; // we want this in desc order
+          }
+          // a > b
+          if (aDate > bDate) {
+            return -1;// we want this in desc order
+          }
+          // a must be equal to b
+          return 0;
+        })[0];
+
+        if (fullRefund) {
+          // if full refund, we should act dependent on existing order state:
+          // states: cancelled (do nothing, we should have bailed above)
+          //         paid online|present (change state to cancelled)
+          //         labeled|ready|closed (leave state alone, update only total amount)
+          if ((currentState == "Paid Online") || (currentState == "Present")) {
+            console.log("upsertTransaction: detected full refund, cancelling order");
+            this.worksheet.updateCell(rowIndex,'Order State', 'Cancelled');
+            this.worksheet.updateCell(rowIndex,'Total Amount', newAmount);
+            //delete meals/soups/serving counts for this transaction
+            this.worksheet.updateCell(rowIndex,'Total Meals', 0);
+            this.worksheet.updateCell(rowIndex,'Total Soups', 0);
+            this.worksheet.updateCell(rowIndex,'Fried Fish', 0);
+            this.worksheet.updateCell(rowIndex,'Baked Fish', 0);
+            this.worksheet.updateCell(rowIndex,'Fried Shrimp', 0);
+            this.worksheet.updateCell(rowIndex,'Baked Shrimp', 0);
+            this.worksheet.updateCell(rowIndex,'Mac & Cheese', 0);
+            this.worksheet.updateCell(rowIndex,'Grilled Cheese', 0);
+            this.worksheet.updateCell(rowIndex,'French Fries', 0);
+            this.worksheet.updateCell(rowIndex,'Red Potato', 0);
+            this.worksheet.updateCell(rowIndex,'Soup', 0);
+
+          }
+          else if (currentState !== "Cancelled") {
+            console.log("upsertTransaction: detected full refund, order has already been processed so setting total to " + newAmount);
+            this.worksheet.updateCell(rowIndex,'Total Amount', newAmount);
+          }
+        }
+        else {
+          // if partial refund, we should act dependent on existing order state:
+          // states: cancelled (do nothing, we should have bailed above)
+          //         all other states (leave state alone, update only total amount)
+          //
+          // we can not explicitly update the meal counts/servings/etc as Square does not update the itemization based on the refund
+
+          //compute new total amount
+          console.log("upsertTransaction: detected partial refund, setting total to " + newAmount);
+
+          if (currentState !== "Cancelled") {
+            this.worksheet.updateCell(rowIndex,'Total Amount', newAmount);
+          }
+        }
+
+        var refundsSheet = new Worksheet(null,"Refunds");
+        var refundObject = {
+          'Order Number': existingOrder['Order Number'],
+          'Square Payment ID': existingOrder['Payment ID'],
+          'Receipt URL': existingOrder['Square Receipt Link'],
+          'State When Refunded': existingOrder['Order State'],
+          'Total Amount': existingOrder['Total Amount'],
+          'Refund Amount': Math.abs(parseInt(refund.refunded_money.amount)/100),
+          'Reason for Refund': refund.reason,
+          'Refund Type': refund.type,
+          'Time of Refund': convertISODate(new Date(refund.created_at))
+        };
+        refundsSheet.worksheet.append(refundObject);
+      }
     }
+  }
+  catch (e) {
+    throw e;
+  }
+  finally {
+    if (lock)
+      lock.releaseLock();
   }
 }
 
@@ -186,17 +203,23 @@ Worksheet.prototype.updateWaitTimeFormulas = function (rowIndex) {
   this.worksheet.worksheet.getRange(timePresentCell).setNumberFormat("h:mmam/pm");
 
   var curWaitTimeFormula = "IF(OR("+orderStateCell+"=\"Present\","+
-                                    orderStateCell+"=\"Labeled\","+
-                                    orderStateCell+"=\"Ready\"),NOW()-"+timePresentCell+",\"\")";
+                                    orderStateCell+"=\"Labeled\"),NOW()-"+timePresentCell+",\"\")";
 
   this.worksheet.worksheet.getRange(curWaitTimeCell).setFormula(curWaitTimeFormula).setNumberFormat("[m] \"minutes\"");
 
   var finalWaitTimeCell = this.worksheet.getColumnLetter("Final Wait Time") + rowIndex;
-  var timeClosedCell    = this.worksheet.getColumnLetter("Time Closed") + rowIndex;
+  var timeReadyCell     = this.worksheet.getColumnLetter("Time Ready") + rowIndex;
 
-  var finalWaitTimeFormula = "IF("+orderStateCell+"=\"Closed\","+timeClosedCell+"-"+timePresentCell+",\"\")";
+  var finalWaitTimeFormula = "IF(OR("+orderStateCell+"=\"Closed\","+orderStateCell+"=\"Ready\"),"+timeReadyCell+"-"+timePresentCell+",\"\")";
 
   this.worksheet.worksheet.getRange(finalWaitTimeCell).setFormula(finalWaitTimeFormula).setNumberFormat("[m] \"minutes\"");
+
+  var orderStateMessageCell = this.worksheet.getColumnLetter("Order State Message") + rowIndex;
+  var orderStateMessageFormula = "IF("+orderStateCell+"=\"Present\",\"Being Cooked\","+
+                                 "IF("+orderStateCell+"=\"Labeled\",\"Being Plated\","+
+                                 "IF("+orderStateCell+"=\"Ready\",\"Ready for Pickup\","+orderStateCell+")))";
+
+  this.worksheet.worksheet.getRange(orderStateMessageCell).setFormula(orderStateMessageFormula);
 }
 
 Worksheet.prototype.reprintLabel = function (orderNumber, printerId) {
@@ -219,8 +242,8 @@ Worksheet.prototype.printLabel = function(orderNumber, printerId, advanceState) 
   var order = this.worksheet.getRowAsObject(rowIndex);
   console.log({message: "printLabel: order data from sheet", data: order});
 
-  if (order['Last Name'] == "") {
-    var errMsg = 'printLabel: Missing last name for order: ' + orderNumber;
+  if (order['Customer Name'] == "") {
+    var errMsg = 'printLabel: Missing customer name for order: ' + orderNumber;
     console.error(errMsg);
     Browser.msgBox(errMsg);
     return false;

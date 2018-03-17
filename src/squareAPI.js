@@ -1,8 +1,3 @@
-function test() {
-  var a = squareAPI();
-  a.OrderDetails('ctOhb9LkHmz83Dt1ivXkLQB');
-}
-
 function squareAPI() {
   this.default_location_id = 'D8BZ0GPZ20V86'; //default location id
 }
@@ -70,18 +65,18 @@ squareAPI.prototype.TransactionDetails = function(location_id, created_at) {
 
 
 /**
- * Retrieves the customer's last name (aka family name) for a specified customer record
+ * Retrieves the customer's name for a specified customer record
  *
  * Assumes SQUARE_ACCESS_TOKEN for authentication is stored in Script Property of same name
  * Uses Square Connect V2 API as the V1 API does not expose customer objects
  *
  * @param {string} customer_id
  *   Customer ID corresponding to Square Customer Object
- * @returns {string} customer's last name
+ * @returns {string} customer's name
  * @throws Will throw an error if the API call to Square is not successful for any reason (including customer_id not found)
  */
-squareAPI.prototype.CustomerFamilyName = function(customer_id) {
-  console.log("CustomerFamilyName: input is " + customer_id);
+squareAPI.prototype.CustomerName = function(customer_id) {
+  console.log("CustomerName: input is " + customer_id);
   if (customer_id == "")
     return "";
 
@@ -89,9 +84,9 @@ squareAPI.prototype.CustomerFamilyName = function(customer_id) {
   responseObj = this.call(url);
 
   try {
-    return responseObj.customer.family_name;
+    return responseObj.customer.given_name + " " + responseObj.customer.family_name;
   } catch (e) {
-    console.error({message: "CustomerFamilyName: could not fetch family name from Square API response", data: responseObj});
+    console.error({message: "CustomerName: could not fetch name from Square API response", data: responseObj});
     return "";
   }
 }
@@ -113,7 +108,7 @@ squareAPI.prototype.TransactionMetadata = function (location_id, order_id, creat
     txn.tenders.some( function (tender){
       if (tender.id == order_id) {
         origin = txn.product; //REGISTER or ONLINE_STORE or EXTERNAL_API
-        customer_id = tender.customer_id; //we store this to query the customer's last name
+        customer_id = tender.customer_id; //we store this to query the customer's name
         note = tender.note;
         return true;
       }

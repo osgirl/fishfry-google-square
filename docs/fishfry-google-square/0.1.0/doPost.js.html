@@ -146,6 +146,7 @@ function doPost(e) {
     // PAYMENT_UPDATED will be sent regardless of creation or update
     if (input.event_type == 'PAYMENT_UPDATED'){
       var fmt_order = new FormatOrder();
+      //FYI: this call can sleep up until 31 seconds waiting for a customer name to appear
       var txn = fmt_order.SquareTransactionToSheet(input.location_id, input.entity_id);
       worksheet.upsertTransaction(txn);
     }
