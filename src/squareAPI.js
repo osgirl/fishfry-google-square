@@ -72,7 +72,7 @@ squareAPI.prototype.TransactionDetails = function(location_id, created_at) {
  *
  * @param {string} customer_id
  *   Customer ID corresponding to Square Customer Object
- * @returns {string} customer's name
+ * @returns {object} customer object
  * @throws Will throw an error if the API call to Square is not successful for any reason (including customer_id not found)
  */
 squareAPI.prototype.CustomerName = function(customer_id) {
@@ -84,7 +84,7 @@ squareAPI.prototype.CustomerName = function(customer_id) {
   responseObj = this.call(url);
 
   try {
-    return responseObj.customer.given_name + " " + responseObj.customer.family_name;
+    return responseObj.customer;//.given_name + " " + responseObj.customer.family_name;
   } catch (e) {
     console.error({message: "CustomerName: could not fetch name from Square API response", data: responseObj});
     return "";

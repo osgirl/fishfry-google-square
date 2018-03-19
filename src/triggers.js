@@ -122,8 +122,8 @@ function simulateNewOrder() {
   var simulation = new simulateSquare();
   var new_txn = simulation.NewTransaction();
   var new_order = simulation.NewOrder();
-  var last_name = 'simulated_' + simulation.randomString(10);
-  var txn = fmt_order.ConvertSquareToSheet(new_txn, new_order, last_name);
+  var customer = {given_name:'simulated', family_name: simulation.randomString(10)};
+  var txn = fmt_order.ConvertSquareToSheet(new_txn, new_order, customer);
   worksheet.upsertTransaction(txn);
 
   Browser.msgBox("Script successfully simulated an Order.");

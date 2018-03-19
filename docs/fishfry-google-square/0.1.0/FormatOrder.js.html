@@ -180,15 +180,15 @@ FormatOrder.prototype.SquareTransactionToSheet = function (location_id, payment_
     Utilities.sleep(sleepTimer);
     sleepTimer *= 2;
   }
-  var customerName = "";
+  var customerInfo = {};
   // don't bother calling to get a customer name if we don't have the customer ID
   if (txnMetadata.customer_id !== undefined){
-    customerName = this.api.CustomerName(txnMetadata.customer_id);
+    customerInfo = this.api.CustomerName(txnMetadata.customer_id);
   }
-  return this.ConvertSquareToSheet(txnMetadata, orderDetails, customerName);
+  return this.ConvertSquareToSheet(txnMetadata, orderDetails, customerInfo);
 }
 
-FormatOrder.prototype.ConvertSquareToSheet = function(txnMetadata, orderDetails, customerName) {
+FormatOrder.prototype.ConvertSquareToSheet = function(txnMetadata, orderDetails, customerInfo) {
   // convert Square schema to Sheet schema
   var order = new menuItems();
   orderDetails.itemizations.forEach( function (item) {
@@ -228,6 +228,7 @@ FormatOrder.prototype.ConvertSquareToSheet = function(txnMetadata, orderDetails,
   var orderNumber = this.getOrderNumberAtomic();
   var fmtLabel = new FormatLabel();
   var notes = this.createNoteString(orderDetails);
+  var customerName = customerInfo.given_name + " " + customerInfo.family_name;
 
   // format data for Sheet
   var result = {
@@ -237,6 +238,7 @@ FormatOrder.prototype.ConvertSquareToSheet = function(txnMetadata, orderDetails,
     "Payment ID Prefix": orderDetails.id.substring(0,4),
     "Total Amount": parseInt(orderDetails.total_collected_money.amount)/100,
     "Order Received Date/Time": convertISODate(new Date(orderDetails.created_at)),
+    "Last Name": customerInfo.family_name,
     "Customer Name": customerName,
     "Expedite": "No",
     "Note on Order": notes,

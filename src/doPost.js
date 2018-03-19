@@ -1,6 +1,5 @@
 function doGet(e) {
-  Logger.log('doGet');
-  return HtmlService.createHtmlOutput("doGet from fish fry");
+  return HtmlService.createHtmlOutputFromFile('src/html/onlineCheckin').setTitle('KofC 7186 Fish Fry: Online Order Check-in');
 }
 
 /**
