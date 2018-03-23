@@ -172,6 +172,10 @@ FormatOrder.prototype.getStateFromOrigin = function (origin){
 FormatOrder.prototype.SquareTransactionToSheet = function (location_id, payment_id) {
   // try to get updated order details from Square
   var orderDetails = this.api.OrderDetails(payment_id);
+  //TODO: orderDetails.payment_url ; split this by '/' and take last token - this will be the transaction ID for v2 API
+  // var paymentUrlArray = orderDetails.payment_url.split('/');
+  // var transactionId = paymentUrlArray[paymentUrlArray.length-1];
+  // once you have the v2 transaction ID, you would need to reimplement TransactionMetadata to use RetrieveTransaction
   var txnMetadata = this.api.TransactionMetadata(location_id, payment_id, orderDetails.created_at);
   var sleepTimer = 1000;
   while (txnMetadata.customer_id == undefined &amp;&amp; sleepTimer &lt;= 16000){
@@ -228,7 +232,7 @@ FormatOrder.prototype.ConvertSquareToSheet = function(txnMetadata, orderDetails,
   var orderNumber = this.getOrderNumberAtomic();
   var fmtLabel = new FormatLabel();
   var notes = this.createNoteString(orderDetails);
-  var customerName = customerInfo.given_name + " " + customerInfo.family_name;
+  var customerName = ((customerInfo.given_name === undefined) ? "" : customerInfo.given_name) + " " + customerInfo.family_name;
 
   // format data for Sheet
   var result = {
