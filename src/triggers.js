@@ -2,6 +2,7 @@ function onOpen() {
   //TODO: Check for SQUARE_ACCESS_TOKEN in Properties; throw exception / warning if that is not present
   SpreadsheetApp.getUi()
       .createMenu('Station Menu')
+      .addItem('Online Check-In Page','showOnlineCheckinPageUrl')
       .addItem('Cashier Station', 'showCashierSidebar')
       .addItem('Labeling Station', 'showLabelingSidebar')
       .addItem('Ready Station', 'showReadySidebar')
@@ -21,6 +22,7 @@ function onOpen() {
     .createMenu('CloudPrint')
     .addItem('Authorization URL', 'testPrinterAccess')
     .addItem('Show Printers', 'showPrinters')
+    .addItem('Logout','logoutPrintOAuth')
     .addToUi();
   //TODO: validate/install triggers
 }
@@ -163,9 +165,18 @@ function showClosingSidebar() {
   SpreadsheetApp.getUi().showSidebar(htmlOutput);
 }
 
+function showOnlineCheckinPageUrl() {
+  Browser.msgBox(ScriptApp.getService().getUrl());
+}
+
 function testPrinterAccess() {
   var printer = new Printer();
   Browser.msgBox(printer.showAuthorizationURL());
+}
+
+function logoutPrintOAuth() {
+  var printer = new Printer();
+  Browser.msgBox(printer.logout());
 }
 
 function showPrinters(returnList) {

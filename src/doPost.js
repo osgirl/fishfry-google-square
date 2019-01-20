@@ -1,7 +1,3 @@
-function doGet(e) {
-  return HtmlService.createHtmlOutputFromFile('src/html/onlineCheckin').setTitle('KofC 7186 Fish Fry: Online Order Check-in');
-}
-
 /**
  * This script processes two styles of requests:
  *

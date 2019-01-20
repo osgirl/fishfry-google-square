@@ -143,7 +143,9 @@ FormatOrder.prototype.ConvertSquareToSheet = function(txnMetadata, orderDetails,
   var orderNumber = this.getOrderNumberAtomic();
   var fmtLabel = new FormatLabel();
   var notes = this.createNoteString(orderDetails);
-  var customerName = ((customerInfo.given_name === undefined) ? "" : customerInfo.given_name) + " " + customerInfo.family_name;
+  //Below filter removes empty strings, undefined, null values and will return appropriate string
+  var customerName = [customerInfo.given_name, customerInfo.family_name].filter(function(el) { return el; }).join(" ");
+  //var customerName = ((customerInfo.given_name === undefined) ? "" : customerInfo.given_name) + " " + customerInfo.family_name;
 
   // format data for Sheet
   var result = {

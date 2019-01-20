@@ -1,42 +1,144 @@
 <!DOCTYPE html>
 <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
+<style type="text/css">
+  #selectable .ui-selecting { background: #FECA40; }
+  #selectable .ui-selected { background: #F39814; color: white; }
+  #selectable { list-style-type: none; margin: 0; padding: 0; width: 60%; }
+  #selectable li { margin: 3px; padding: 0.4em; font-size: 1.4em; height: 18px; } 
+</style>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
-<script>
-  $( function() {
-  
-    //get customer names, order numbers, payment IDs, and square receipt URLs
-    var availableTags = [
-      "ActionScript",
-      "AppleScript",
-      "Asp",
-      "BASIC",
-      "C",
-      "C++",
-      "Clojure",
-      "COBOL",
-      "ColdFusion",
-      "Erlang",
-      "Fortran",
-      "Groovy",
-      "Haskell",
-      "Java",
-      "JavaScript",
-      "Lisp",
-      "Perl",
-      "PHP",
-      "Python",
-      "Ruby",
-      "Scala",
-      "Scheme"
-    ];
-    $( "#tags" ).autocomplete({
-      source: availableTags
-    });
-  } );
-</script>
-
 <div class="ui-widget">
-  <label for="tags">Tags: </label>
+  <label for="tags">Customer Name: </label>
   <input id="tags">
 </div>
+<br/>
+Orders for Selected Customer:
+<ol id="selectable">
+</ol>
+
+<script>
+  var availableOrders = [];
+  var refreshInterval = null;
+  //on load, get initial list and start polling updates
+  $(function() {
+    google.script.run.withSuccessHandler(buildCustomerNameAutocompleteList).getOnlineOrdersForCheckin();
+    refreshInterval = setInterval(function () { google.script.run.withSuccessHandler(buildCustomerNameAutocompleteList).getOnlineOrdersForCheckin(); }, 4000);
+  });
+
+  $( "#selectable" ).selectable();
+  
+  const unique = (value, index, self) => {
+    return self.indexOf(value) === index;
+  }
+    
+  function buildCustomerNameAutocompleteList(newList) {
+    availableOrders = newList;
+    $( "#tags" ).autocomplete({
+      source: availableOrders.map(function (order) { return order.customer_name; } ).filter(unique),
+    });
+  }
+
+  //this clears out potential orders if there is any change in text field after potential orders have been displayed
+  $( "#tags" ).on("input", function() {
+    if ($(".ui-widget-content").length)
+      $( "#selectable").empty();
+  });
+  
+  //this method is called when an option is selected from the autocomplete drop down list
+  $( "#tags" ).on("autocompleteselect", function( event, ui ) {
+    //TODO: do we really want to do this? if it gets re-emptied, it won't be refreshing....
+    //clearInterval(refreshInterval);
+    $( "#selectable").empty();
+    //below code covers cases where same customer name has multiple orders; we only want to check in 1 at a time though
+    $.each($.grep(availableOrders, function (order, idx) {return order['customer_name'] == ui.item.value;}),function (index, value) { 
+      $( "#selectable" ).append(
+         $('<li>').attr('class','ui-widget-content')
+                  .attr('receipt_link',value.receipt_link)
+                  .attr('order_number',value.order_number)
+                  .attr('customer_name',value.customer_name)
+                  .append("Order #"+value.order_number + ": " + value.customer_name + " ($" + value.total_amount.toFixed(2) + ")")
+       );
+    });
+  });
+  
+  function setCheckInButton() {
+    reviewDialog.dialog("option", "buttons", {
+      "Check In!": function() {
+        //remove iframe but keep width
+        reviewDialog.dialog("option", "width", reviewDialog.width());
+        iframe.empty();
+        iframe.attr('srcdoc','');
+        google.script.run.withSuccessHandler(checkInComplete).withFailureHandler(checkInFailed).markPresent($(".ui-selected").attr('order_number'));
+        //checkInComplete();
+        //$( this ).dialog( "close" );
+      }});
+  }
+  
+  var iframe = $('<iframe frameborder="0" marginwidth="0" marginheight="0" allowfullscreen></iframe>');
+  var reviewDialog = $("<div></div>").append(iframe).appendTo("body").dialog({
+    autoOpen: false,
+    position: { my: "center top", at: "center top+50", of: window },
+    modal: true,
+    width: "auto",
+    height: "auto",
+    close: function() {
+      iframe.empty();
+      iframe.attr('srcdoc','');
+    },
+  });
+  setCheckInButton();
+  
+  function checkInComplete() {
+    reviewDialog.append("<p>Thank you for supporting our Lenten Fish Fry!</p><p>We have started to prepare your meal(s). Please listen for your order number to be called and watch the television screens for updated status on your order.</p>");
+    reviewDialog.dialog("option", "height", "auto");
+    reviewDialog.dialog("option", "buttons", {
+      "Close": function() {
+        reviewDialog.find("p").remove();
+        $( "#selectable" ).empty();
+        $( "#tags" ).val('');
+        $( this ).dialog( "close" );
+        reviewDialog.dialog("option", "width", "auto");
+        setCheckInButton();
+        document.getElementById("tags").focus();
+      }
+    });
+  }
+  
+  function checkInFailed(error) {
+    reviewDialog.append("<p>There was an error processing the check-in; please see a staff member for assistance!<br/>"+error+"</p>");
+    reviewDialog.dialog("option", "height", "auto");
+    reviewDialog.dialog("option", "buttons", {
+      "Close": function() {
+        reviewDialog.find("p").remove();
+        $( "#selectable" ).empty();
+        $( "#tags" ).val('');
+        $( this ).dialog( "close" );
+        reviewDialog.dialog("option", "width", "auto");
+        setCheckInButton();
+        document.getElementById("tags").focus();
+      }
+    });
+  }
+  
+  function displayOrderTable(table) {
+    iframe.attr('srcdoc',table);
+  }
+  
+  iframe.load(function () {
+    iframe.contents().find("body > :not(.table-payment-info,.table-date-and-tenders)").hide();
+    iframe.contents().find("body").append(iframe.contents().find(".table-payment-info:first")).attr('style','min-height: 0').append(iframe.contents().find(".table-date-and-tenders:first"));
+    $( ".ui-dialog-content" ).height(iframe.contents().find("body").height());
+    iframe.height(iframe.contents().find("body").height());
+    
+  });
+  
+  $( "#selectable" ).on( "selectableselected", function( event, ui ) {
+    var src = $(".ui-selected").attr("receipt_link");
+    google.script.run.withSuccessHandler(displayOrderTable).fetchOrderTableFromSquareReceipt(src);
+    reviewDialog.dialog("option", "title", "Order #"+$(".ui-selected").attr('order_number')).dialog("open");
+  });
+  
+  document.getElementById("tags").focus();
+
+</script>

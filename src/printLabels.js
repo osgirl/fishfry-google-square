@@ -2,8 +2,9 @@ function Printer (printerId) {
   this.printerId = printerId;
 
   this.service = this.getCloudPrintService();
-  this.oauth_token = this.service.getAccessToken();
 
+  if (this.service.hasAccess())
+    this.oauth_token = this.service.getAccessToken();
 }
 
 //https://ctrlq.org/code/20061-google-cloud-print-with-apps-script
@@ -13,7 +14,7 @@ Printer.prototype.getCloudPrintService = function() {
     .setTokenUrl('https://accounts.google.com/o/oauth2/token')
     .setClientId(PropertiesService.getScriptProperties().getProperty("CLIENT_ID"))
     .setClientSecret(PropertiesService.getScriptProperties().getProperty("CLIENT_SECRET"))
-    .setCallbackFunction(this.authCallback)
+    .setCallbackFunction('handleAuth')
     .setPropertyStore(PropertiesService.getUserProperties())
     .setScope('https://www.googleapis.com/auth/cloudprint')
     .setParam('login_hint', Session.getActiveUser().getEmail())
@@ -21,9 +22,27 @@ Printer.prototype.getCloudPrintService = function() {
     .setParam('approval_prompt', 'force');
 }
 
+/* previous impl passed 'this.authCallback' above however the userCallback could not resolve the correct
+ . method to invoke. having a single global function that creates a new object seems to work fine
+ */
+function handleAuth(request) {
+  var printer = new Printer();
+  var isAuthorized = printer.service.handleCallback(request);
+  if (isAuthorized) {
+    return HtmlService.createHtmlOutput('You can now use Google Cloud Print from Apps Script.');
+  } else {
+    return HtmlService.createHtmlOutput('Cloud Print Error: Access Denied');
+  }
+}
+
 Printer.prototype.showAuthorizationURL = function() {
   var response = this.service.getAuthorizationUrl();
   return response;
+}
+
+Printer.prototype.logout = function() {
+  this.service.reset();
+  return "Logged Out";
 }
 
 Printer.prototype.authCallback = function(request) {

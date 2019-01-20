@@ -203,7 +203,7 @@ Worksheet.prototype.updateWaitTimeFormulas = function (rowIndex) {
   this.worksheet.worksheet.getRange(timePresentCell).setNumberFormat("h:mmam/pm");
 
   var curWaitTimeFormula = "IF(OR("+orderStateCell+"=\"Present\","+
-                                    orderStateCell+"=\"Labeled\"),NOW()-"+timePresentCell+",\"\")";
+                                    orderStateCell+"=\"Labeled\"),Globals!$B$5-"+timePresentCell+",\"\")";
 
   this.worksheet.worksheet.getRange(curWaitTimeCell).setFormula(curWaitTimeFormula).setNumberFormat("[m] \"minutes\"");
 
