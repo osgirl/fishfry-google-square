@@ -13,8 +13,6 @@ function onOpen() {
     .createMenu('SquareUp')
     .addItem('Enable Pull Payments', 'pullPaymentsOn')
     .addItem('Disable Pull Payments', 'pullPaymentsOff')
-    .addItem('Register Webhook', 'registerWebhook')
-    .addItem('Delete Webhook', 'deleteWebhooks')
     .addItem('Simulate New Order', 'simulateNewOrder')
     .addToUi();
 
